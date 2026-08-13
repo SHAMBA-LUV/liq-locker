@@ -1,0 +1,58 @@
+[profile.default]
+src = "src"
+out = "out"
+test = "test"
+script = "script"
+libs = ["lib"]
+solc_version = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+evm_version = "paris"
+via_ir = true
+bytecode_hash = "none"
+ffi = false
+
+# The mainnet-fork rehearsal runs in a CANCUN evm, because mainnet is cancun and the real
+# tokens it calls into are compiled for it — LUV is solc 0.8.24/cancun, and a PUSH0 in its
+# bytecode is `EvmError: NotActivated` under paris. The DEFAULT profile stays on paris on
+# purpose: that is the bytecode this locker deploys, and paris runs on every chain including
+# those that never adopted shanghai. Deployment target and rehearsal target are different
+# questions, so they get different profiles rather than one compromise.
+#     make fork-test    (FOUNDRY_PROFILE=fork FORK_TEST=1)
+[profile.fork]
+src = "src"
+out = "out-fork"
+test = "test"
+libs = ["lib"]
+solc_version = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+via_ir = true
+bytecode_hash = "none"
+ffi = false
+
+[profile.default.fuzz]
+runs = 4096
+
+[profile.default.invariant]
+runs = 512
+depth = 64
+
+[profile.ci.fuzz]
+runs = 20000
+
+[fmt]
+line_length = 118
+tab_width = 4
+bracket_spacing = true
+int_types = "long"
+multiline_func_header = "params_first"
+quote_style = "double"
+number_underscore = "thousands"
+
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC_URL}"
+
+[etherscan]
+mainnet = { key = "${ETHERSCAN_API_KEY}" }

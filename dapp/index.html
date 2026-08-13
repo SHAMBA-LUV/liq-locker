@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Liquidity Locker</title>
+<!-- No CDN, no remote font, no analytics. Everything this page needs is beside it,
+     which is what makes the Tauri bundle self-contained and the CSP honest. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' https://ethereum-rpc.publicnode.com; img-src 'self' data:; style-src 'self'" />
+<link rel="stylesheet" href="./styled.css" />
+<body>
+  <main id="app"></main>
+  <script type="module">
+    import { mountPanel } from "./dapp.js";
+    import "./modules/augmented.js";   // module layer: added by import, never by core edit
+    const params = new URLSearchParams(location.search);
+    mountPanel(document.getElementById("app"), {
+      lockId: BigInt(params.get("id") ?? 0),
+    });
+  </script>
+</body>

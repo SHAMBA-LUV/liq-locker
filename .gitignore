@@ -1,0 +1,11 @@
+# foundry build output — reproducible from source, never committed
+out/
+out-fork/
+cache/
+broadcast/
+docs/book/
+
+# secrets and local overrides
+.env
+.env.*
+!.env.example

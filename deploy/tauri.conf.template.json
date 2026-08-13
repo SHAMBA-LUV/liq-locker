@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "liquidity-locker",
+  "identifier": "net.pythai.liquiditylocker",
+  "build": { "frontendDist": "../dapp" },
+  "app": {
+    "windows": [{ "title": "Liquidity Locker", "width": 640, "height": 820, "resizable": true }],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' https://ethereum-rpc.publicnode.com; style-src 'self'; img-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "appimage", "msi", "dmg"],
+    "copyright": "(c) 2026 BANKON / cypherpunk2048 — Apache-2.0"
+  }
+}
