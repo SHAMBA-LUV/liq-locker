@@ -28,8 +28,18 @@ bare locker does not have (§5).
 | suite | tests | notes |
 |---|---|---|
 | default profile | **171** | hermetic, offline, `forge test` |
-| mainnet fork | **7** | `make fork-test`, against the real LUV/WETH pair at HEAD |
-| **total** | **178** | 0 failing |
+| mainnet fork | **15** | `make fork-test`, against the real LUV/WETH pair at HEAD |
+| **total** | **186** | 0 failing |
+
+**Redemption is proven against the real position** (`test/redemption_fork.t.sol`, 8 tests):
+the entire real treasury LP — 16,419,484,360,707,141,173,121,139 wei at the block this last
+ran — is locked and comes back **to the wei**, with nothing withheld. Also proven: a
+door-created lock exits through the inherited `withdraw()` with **no signature and no
+verifier call** (demonstrated on a door whose verifier is hostile), a stranger cannot take it
+at any stage including the tempting matured-but-unclaimed window, and a 199-year lock still
+returns exactly. Two honest results are pinned there too — the block gate can *delay*
+redemption if the chain slows, and a beneficiary who cannot sign at maturity is the one
+unrecoverable case.
 
 Of those, the depth that matters:
 
