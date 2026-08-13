@@ -110,7 +110,63 @@ to `now`. There is no shortening path anywhere, by anyone. Extend deliberately.
 indexed entry — 21.6M at 10,000 locks. The index is append-only: an assigned-away lock still
 costs gas for ever.
 
-## 6. What this document does not claim
+## 6. Why not OpenZeppelin
+
+The first question an auditor asks about a custody contract is why it is not the audited,
+battle-tested library version. The answer is that **there is no library version any more**,
+and the two properties this contract sells are the two OpenZeppelin does not offer.
+
+Checked against **OpenZeppelin Contracts v5.7.0**, commit `0742777`, read from source:
+
+**There is no token lock in OpenZeppelin.** `TokenTimelock` was **removed in v5.0** — the
+changelog entry reads *"`TokenTimelock` (in favor of `VestingWallet`)"* — and every escrow
+contract (`Escrow`, `ConditionalEscrow`, `RefundEscrow`) was removed in the same release.
+What remains is `finance/VestingWallet.sol`, whose own documentation says *"by setting the
+duration to 0, one can configure this contract to behave like an asset timelock."* In current
+OpenZeppelin, a timelock is a degenerate case of vesting.
+
+| | OZ `VestingWallet` | OZ `TimelockController` | `liquidity_locker` |
+|---|---|---|---|
+| owner | `Ownable`, transferable | proposer / executor / **canceller** + admin | **none at all** |
+| maturity brought forward? | schedule immutable — but ownership is sellable | **yes**: `cancel()`, and `updateDelay()` can *lower* the delay | **no, by anyone** |
+| time gate | timestamp | timestamp | timestamp |
+| **block gate** | none | none | **yes** |
+| extend | impossible (immutable) | reschedule freely | **extend-only** |
+| many locks | one deployment per schedule | n/a | one contract, ids |
+
+`block.number` appears **zero times** in `VestingWallet.sol`, `VestingWalletCliff.sol` and
+`TimelockController.sol`. The dual time-and-block gate has no OpenZeppelin analogue, and
+neither does ownerless custody — `TimelockController` is explicitly *not* extend-only, since
+a `CANCELLER_ROLE` holder can drop a pending operation and the delay itself can be lowered by
+a scheduled self-call.
+
+Three specific differences, in OpenZeppelin's own words:
+
+1. **Transferable ownership is a wart there and a feature here.** *"Since the wallet is
+   {Ownable}, and ownership can be transferred, it is possible to sell unvested tokens.
+   Preventing this in a smart contract is difficult."* `assign` is the same capability, but
+   it moves **who**, never **when** — `test_attack_AssignDoesNotMoveMaturity` proves
+   succession is not an early exit, and `test_attack_OldBeneficiaryLosesTheKeyOnAssign`
+   proves the key moves rather than copies.
+
+2. **`VestingWallet` has a footgun this contract does not.** Its `vestedAmount` is computed
+   against `balanceOf(this) + released()`, so *"any assets transferred to this contract will
+   follow the vesting schedule as if they were locked from the beginning"* — tokens sent
+   later are **partly immediately releasable**. Per-lock principal accounting means a stray
+   transfer here becomes sweepable surplus, never an instant unlock.
+   `test_attack_SweepCannotReachLockedPrincipal` holds the other half of that line.
+
+3. **OpenZeppelin punts on rebasing tokens.** *"When using this contract with any token whose
+   balance is adjusted automatically (i.e. a rebase token), make sure to account the
+   supply/balance adjustment in the vesting schedule."* That is a warning, not a mechanism.
+   The sibling `luv-locker` exists because LUV is exactly that token.
+
+**The honest summary:** there is no OpenZeppelin contract that could have been used instead.
+That is not a claim this one is better — OpenZeppelin's are audited and these are not, which
+is the whole of §4's last box. It is a claim that the choice was between writing this and
+shipping something that can be cancelled by a role-holder.
+
+## 7. What this document does not claim
 
 It does not claim the contracts are safe. It claims that a specific, listed set of properties
 was tested, by the people who wrote them, and that those tests pass. The value of an
