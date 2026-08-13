@@ -204,12 +204,63 @@ The suite is **skipped unless `FORK_TEST=1`**, so an offline build can never fai
 it forks at HEAD by default (`FORK_BLOCK` pins a height; an archive node is needed once that
 height ages out of the recent-state window).
 
-## 5. Still to write before mainnet
-- Differential fuzz of `ECDSALib` against OpenZeppelin's `ECDSA`. Inherited unwritten
-  from bankon-vault, where it is also listed as the highest-value missing test.
-- A malicious-verifier test: confirm a door with a hostile verifier can forge consent, so
-  the trust assumption in §3 is demonstrated rather than asserted.
-- Gas measurement of `locks_of` at 100 / 1,000 / 10,000 locks, to give the UI a real bound.
+## 5c. The last three gaps — WRITTEN (2026-08-13)
+
+All three items previously listed as "still to write" are done. None of them found a
+vulnerability; the second one demonstrated an accepted risk, and the third produced a number
+the UI needs. What remains before mainnet is an **independent audit**, which is not a test.
+
+**Differential fuzz of `ECDSALib` against OpenZeppelin** — `test/ecdsa_differential.t.sol`,
+8 tests at 4,097 runs each = **32,776 signature comparisons**. OpenZeppelin's `ECDSA` v5.7.0
+is vendored verbatim into `test/reference/OZ_ECDSA.sol` for tests only; nothing in `src/`
+imports it and it never enters deployed bytecode. Result: **full agreement wherever it
+matters** — over honest signatures, over arbitrary bytes, and over a real signature with each
+field independently corrupted, the two never return different nonzero signers, and ours never
+accepts anything OpenZeppelin refuses. The three specific hazards are pinned separately: the
+EIP-2 high-s twin is refused by both, every `v` outside {27, 28} is refused by both, every
+length but 65 is refused by both, and `isValidSignatureNow(address(0), …)` is false for all
+input — the trap that would otherwise turn a malformed signature into "anyone may sign".
+
+*Vendored rather than submoduled for a second reason: OpenZeppelin's repo carries its own
+`foundry.toml` pinning an `evm_version` this toolchain does not recognise, and foundry reads
+nested configs when resolving remappings. Recorded as hazard T-5.*
+
+**The malicious verifier** — `test/malicious_verifier.t.sol`, 7 tests. An unusual file: here
+a PASS means the attack SUCCEEDED, because §3 accepts in writing that the verifier is trusted
+and an accepted risk that has never been demonstrated is just a sentence. A `yes_verifier`
+returning `true` for everything forges consent completely — with a **zero-byte signature** an
+attacker withdraws a victim's matured lock to themselves (`open_door`), adds nine years to a
+victim's maturity (`extend_by_sig`), and binds a victim as beneficiary without their
+participation (`lock_with_consent`).
+
+Two boundaries are proven alongside it, and they are why this is an accepted risk rather
+than a defect. **The blast radius stops at the door**: `liquidity_locker` takes no verifier,
+so a lock made directly against it — which is what the LP position will be — is untouched by
+any of this. And **a hostile verifier forges WHO, never WHEN**: the gates live in the
+locker's storage and take no signature, so a forged instruction still waits for maturity.
+
+> **Operational consequence.** Verifying `locker_door` on Etherscan is NOT sufficient to
+> trust it. The door's own source can be flawless while the address it points at is hostile.
+> Whoever audits a deployed door must read `VERIFIER()` and verify THAT contract too. §6's
+> "verifier choice made deliberately" is not a formality; it is the entire trust boundary.
+
+**The `locks_of` gas bound** — `test/locks_of_gas.t.sol`, 5 tests. Measured, not estimated:
+
+| locks | gas | per lock | against a 30M block |
+|---|---|---|---|
+| 100 | **195,043** | 1,950 | 0.7% |
+| 1,000 | **1,949,048** | 1,950 | 6.5% |
+| 10,000 | **21,577,308** | 2,158 | **72%** |
+
+Growth is **linear** and asserted so (per-lock cost is flat from 100 to 1,000). The practical
+ceiling is the node's `eth_call` cap, not a block: 10,000 locks fits comfortably under a 50M
+cap and is nowhere near Alchemy/Infura's higher ceilings, so **a UI can call `locks_of`
+directly up to roughly ten thousand locks per beneficiary** and should paginate beyond that.
+
+One thing a UI author must know: the index is append-only and `assign` never prunes it. A
+lock that changes hands leaves a stale entry in the old beneficiary's list, filtered out of
+the result but still walked — 200 fully-assigned-away locks still cost **244,272 gas** to
+return an empty array. The cost tracks entries ever indexed, not locks currently held.
 
 ## 6. Pre-mainnet checklist
 

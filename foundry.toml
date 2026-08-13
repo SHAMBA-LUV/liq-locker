@@ -11,6 +11,10 @@ evm_version = "paris"
 via_ir = true
 bytecode_hash = "none"
 ffi = false
+# Raised for test/locks_of_gas.t.sol, which BUILDS 10,000 locks before measuring the view —
+# the construction, not the measurement, exceeds foundry's 1.07e9 default. Test-only: this
+# setting has no bearing on deployed bytecode or on any transaction's real gas.
+gas_limit = 90000000000
 
 # The mainnet-fork rehearsal runs in a CANCUN evm, because mainnet is cancun and the real
 # tokens it calls into are compiled for it — LUV is solc 0.8.24/cancun, and a PUSH0 in its
