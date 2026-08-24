@@ -49,6 +49,13 @@ p.body b{color:var(--gold)}
 .state-ok{color:var(--green);font-weight:700}
 .state-muted{color:var(--muted)}
 .readat{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:.9em;text-align:center}
+.buyluv{display:inline-flex;align-items:center;justify-content:center;gap:9px;margin:1em auto 0;
+  font-size:15px;letter-spacing:.12em;padding:15px 42px;border-radius:999px;border:0;
+  background:linear-gradient(100deg,#FF007A,#8338EC 88%);color:#fff;font-weight:800;text-decoration:none;
+  box-shadow:0 12px 34px -10px rgba(255,0,110,.55);animation:pulseglow 2.6s ease-in-out infinite}
+.buyluv:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.buyluv-row{text-align:center}
+@keyframes pulseglow{0%,100%{box-shadow:0 12px 34px -10px rgba(255,0,110,.45)}50%{box-shadow:0 14px 40px -8px rgba(131,56,236,.6)}}
 footer{max-width:1080px;margin:2rem auto 0;padding:0 16px;font-family:var(--mono);font-size:.8rem;color:var(--muted);text-align:center}
 footer a{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
 .cardrow{display:grid;grid-template-columns:1fr;gap:0}
@@ -71,6 +78,9 @@ footer a{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
       <div class="cell"><span class="label">Share of all liquidity</span><span id="s-pct" class="value big">…</span></div>
       <div class="cell"><span class="label">Locks</span><span id="s-locks" class="value big goldc">…</span></div>
     </div>
+        <p class="buyluv-row"><a class="buyluv" target="_blank" rel="noopener"
+      title="opens Uniswap preset USDC → LUV — set slippage ~10%"
+      href="https://app.uniswap.org/swap?chain=ethereum&inputCurrency=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&outputCurrency=0x2711111111683B8708cb9a48cBf36a51315F8254">🦄 buy <b>LUV&nbsp;/&nbsp;USDC</b> ↗</a></p>
     <p id="s-treasury" class="fine">…</p>
     <p id="s-read" class="readat">reading the chain…</p>
   </div>
@@ -108,7 +118,7 @@ footer a{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
     <h2>Verify it yourself</h2>
     <div class="trailrow"><span class="what">The locker — source verified on Etherscan (the green checkmark)</span>
       <span id="c-locker" class="who"></span></div>
-    <div class="trailrow"><span class="what">The <a class="lk" target="_blank" rel="noopener" title="opens Uniswap preset USDC → LUV — set slippage ~10%" href="https://app.uniswap.org/swap?inputCurrency=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&outputCurrency=0x2711111111683B8708cb9a48cBf36a51315F8254&chain=mainnet">LUV/WETH</a> pair — Uniswap V2, where the price is created · <a class="lk" target="_blank" rel="noopener" href="https://app.uniswap.org/swap?inputCurrency=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&outputCurrency=0x2711111111683B8708cb9a48cBf36a51315F8254&chain=mainnet">buy LUV with USDC ↗</a></span>
+    <div class="trailrow"><span class="what">The <a class="lk" target="_blank" rel="noopener" title="opens Uniswap preset USDC → LUV — set slippage ~10%" href="https://app.uniswap.org/swap?inputCurrency=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&outputCurrency=0x2711111111683B8708cb9a48cBf36a51315F8254&chain=mainnet">LUV/WETH</a> pair — Uniswap V2, where the price is created</span>
       <span id="c-pair" class="who"></span></div>
     <div class="trailrow"><span class="what">The LUV token</span>
       <span id="c-luv" class="who"></span></div>
