@@ -418,6 +418,27 @@ function mountGuided() {
       }
     } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
   };
+
+// The term of a lock: the contract stores the DEADLINE, not the start — the start lives
+// in the locked event. One log query + one block header give "set for N days"; the
+// deadline minus now gives "days left". Display only; the contract's own gates decide.
+const DEPLOY_BLOCK = 25822914;
+async function lockTerm(id, unlockAt) {
+  try {
+    const { keccak256 } = await import("./modules/keccak.js");
+    const ev = LIQUIDITY_LOCKER_ABI.find((e) => e.type === "event" && e.name === "locked");
+    const sig = "0x" + keccak256(new TextEncoder().encode(`locked(${ev.inputs.map((i) => i.type).join(",")})`));
+    const logs = await reader.rpc("eth_getLogs", [{ address: cfg.locker,
+      fromBlock: "0x" + DEPLOY_BLOCK.toString(16), toBlock: "latest",
+      topics: [sig, "0x" + BigInt(id).toString(16).padStart(64, "0")] }]);
+    if (!logs.length) return null;
+    const blk = await reader.rpc("eth_getBlockByNumber", [logs[0].blockNumber, false]);
+    const created = Number(BigInt(blk.timestamp));
+    const left = Math.max(0, unlockAt - Math.floor(Date.now() / 1000));
+    return { created, termDays: (unlockAt - created) / 86400, leftDays: left / 86400 };
+  } catch { return null; }
+}
+
   async function viewNewest() {
     const r = $("gr3");
     try {
@@ -425,9 +446,17 @@ function mountGuided() {
       if (count === 0n) { r.textContent = "no locks exist yet — run ① and ② first"; r.className = "iv muted"; return; }
       const id = count - 1n;
       const v = await reader.lockView(id);
+      // days left: the contract's own arithmetic, always available
+      const [secsLeft] = await reader.call("time_remaining", [id]);
+      const leftDays = Number(secsLeft) / 86400;
+      // set-for: needs the locked event; the free RPC sometimes gates log queries
+      const term = await lockTerm(id, v.unlockAt);
+      const termTxt = (term ? `set for ${term.termDays.toFixed(1)} days (since ${new Date(term.created * 1000).toISOString().slice(0, 10)})  ·  ` : "")
+        + `${leftDays.toFixed(1)} days left  ·  `;
       r.replaceChildren();
       r.append(`lock #${id}  ·  token ${v.token}  ·  principal ${v.amount} LP wei  ·  `
         + `beneficiary ${v.beneficiary}  ·  opens ${new Date(v.unlockAt * 1000).toISOString()}  ·  `
+        + termTxt
         + `${v.isLocked ? "🔒 LOCKED" : "matured"}  ·  `);
       const a = el("a", "lk-link", `open the lock panel (?id=${id})`);
       a.href = `./index.html?id=${id}`;
