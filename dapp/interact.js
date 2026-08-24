@@ -74,12 +74,15 @@ async function sendWrite(f, args, resultEl) {
   resultEl.className = "iv muted";
   try {
     const hash = await signer.send(f.name, args);
+    histRecord(signer.account, { label: `${f.name}(${args.join(", ")})`, hash });
     resultEl.replaceChildren();
     resultEl.append("sent ");
     const a = el("a", "lk-link", hash.slice(0, 18) + "…");
     a.href = `${cfg.explorer}/tx/${hash}`; a.target = "_blank"; a.rel = "noopener";
     resultEl.append(a);
     resultEl.className = "iv ok";
+    waitMined(hash, resultEl, f.name).then((ok) =>
+      histUpdate(signer.account, hash, ok === true ? { status: "confirmed" } : ok === false ? { status: "reverted" } : {}));
   } catch (e) {
     resultEl.textContent = `✗ ${e.message}`;
     resultEl.className = "iv bad";
@@ -131,12 +134,91 @@ async function approve(resultEl, amountRaw) {
       method: "eth_sendTransaction",
       params: [{ from: signer.account, to: $("apToken").value.trim(), data }],
     });
+    histRecord(signer.account, { label: `approve(locker, ${amount}) on ${$("apToken").value.trim().slice(0, 10)}…`, hash });
+    waitMined(hash, resultEl, "approve").then((ok) =>
+      histUpdate(signer.account, hash, { status: ok ? "confirmed" : "reverted" }));
     resultEl.replaceChildren("sent ");
     const a = el("a", "lk-link", hash.slice(0, 18) + "…");
     a.href = `${cfg.explorer}/tx/${hash}`; a.target = "_blank"; a.rel = "noopener";
     resultEl.append(a);
     resultEl.className = "iv ok";
   } catch (e) { resultEl.textContent = `✗ ${e.message}`; resultEl.className = "iv bad"; }
+}
+
+// ── .history — the per-address transaction ledger ──────────────────────────
+// Every transaction this page sends is recorded when it leaves the wallet and
+// updated when it mines, keyed by the sending address, persisted in the
+// browser's localStorage. Reloads, other tabs, next week: the ledger holds.
+const HIST_PREFIX = "liq-locker.history.";
+const histKey = (addr) => HIST_PREFIX + addr.toLowerCase();
+
+function histLoad(addr) {
+  try { return JSON.parse(localStorage.getItem(histKey(addr)) || "[]"); }
+  catch { return []; }
+}
+function histSave(addr, rows) {
+  try { localStorage.setItem(histKey(addr), JSON.stringify(rows)); } catch { /* private window etc. */ }
+}
+function histRecord(addr, entry) {
+  const rows = histLoad(addr);
+  rows.push({ at: new Date().toISOString(), status: "sent", ...entry });
+  histSave(addr, rows);
+  renderHistory();
+}
+function histUpdate(addr, hash, patch) {
+  const rows = histLoad(addr);
+  const row = rows.find((r) => r.hash === hash);
+  if (row) Object.assign(row, patch);
+  histSave(addr, rows);
+  renderHistory();
+}
+
+// Transactions that predate the ledger, seeded once per address so the record is
+// complete from the contract's first breath.
+const HIST_SEED = {
+  "0x10f7ee226b16bea7f365dc1edef159fc1957d169": [
+    { at: "2026-08-24T04:57:00Z", label: "Create3d.deploy → liquidity_locker", status: "confirmed", block: 25822914,
+      hash: "0x113ba138d140f7ec0ca75c8697d69b7e8a931d508515ded6cee1523c5627f38d" },
+    { at: "2026-08-24T20:40:00Z", label: "approve(locker, unlimited) on the LUV/WETH pair", status: "confirmed", block: 25827621,
+      hash: "0xf2ab3e27efd82cee3cc57c17397119a57d2d6b8615304405f12d1451a963c422" },
+  ],
+};
+function histSeed(addr) {
+  const seed = HIST_SEED[addr.toLowerCase()];
+  if (!seed) return;
+  const rows = histLoad(addr);
+  let added = false;
+  for (const s of seed) if (!rows.some((r) => r.hash === s.hash)) { rows.push(s); added = true; }
+  if (added) { rows.sort((a, b) => a.at.localeCompare(b.at)); histSave(addr, rows); }
+}
+
+function renderHistory() {
+  const box = $("history");
+  if (!box) return;
+  box.replaceChildren();
+  if (!signer) {
+    box.append(el("p", "iv muted", "connect a wallet — the ledger is kept per address, in this browser, and survives reloads"));
+    return;
+  }
+  const rows = histLoad(signer.account);
+  $("histwho").textContent = `${signer.account} · ${rows.length} transaction${rows.length === 1 ? "" : "s"} recorded`;
+  if (!rows.length) {
+    box.append(el("p", "iv muted", "no transactions recorded yet for this address — they will appear here the moment one is sent"));
+    return;
+  }
+  for (const r of [...rows].reverse()) {
+    const line = el("div", "irow");
+    const head = el("div", "isig");
+    head.append(el("code", null, `${r.label}`));
+    line.append(head);
+    const meta = el("div", r.status === "confirmed" ? "iv ok" : r.status === "reverted" ? "iv bad" : "iv muted");
+    meta.append(`${r.at} · ${r.status}${r.block ? ` in block ${r.block}` : ""} · `);
+    const a = el("a", "lk-link", r.hash.slice(0, 18) + "…");
+    a.href = `${cfg.explorer}/tx/${r.hash}`; a.target = "_blank"; a.rel = "noopener";
+    meta.append(a);
+    line.append(meta);
+    box.append(line);
+  }
 }
 
 // ── the guided path: status → approve → lock → view ────────────────────────
@@ -181,6 +263,23 @@ async function refreshStatus() {
   } catch (e) { s.textContent = `✗ ${e.message}`; s.className = "iv bad"; }
 }
 
+// The amount field takes LP wei — a decimal integer. An address pasted here parses as a
+// huge hex number and produces transfer_from_failed() at the wallet (seen live, once).
+function readAmount(resultEl) {
+  const v = $("gAmount").value.trim();
+  if (/^0x/i.test(v) || /[a-fA-F]/.test(v)) {
+    resultEl.textContent = "✗ that looks like an ADDRESS — the amount field takes LP wei (a decimal number). Press 'set 0.001 LP' or 'set FULL balance'.";
+    resultEl.className = "iv bad";
+    return null;
+  }
+  if (!/^\d+$/.test(v) || BigInt(v) === 0n) {
+    resultEl.textContent = "✗ amount must be a positive decimal integer, in LP wei";
+    resultEl.className = "iv bad";
+    return null;
+  }
+  return BigInt(v);
+}
+
 function mountGuided() {
   $("gRefresh").onclick = refreshStatus;
   $("gDust").onclick = () => { $("gAmount").value = "1000000000000000"; };
@@ -195,26 +294,36 @@ function mountGuided() {
     const r = $("gr1");
     if (!signer) { r.textContent = "connect a wallet first"; r.className = "iv bad"; return; }
     try {
-      const amount = BigInt($("gAmount").value.trim());
+      const amount = readAmount(r);
+      if (amount === null) return;
       const data = "0x095ea7b3" + padAddr(cfg.locker) + amount.toString(16).padStart(64, "0");
       r.textContent = "sign the approve in your wallet…"; r.className = "iv muted";
       const hash = await signer.provider.request({
         method: "eth_sendTransaction",
         params: [{ from: signer.account, to: PAIR, data }],
       });
-      if (await waitMined(hash, r, "approve")) { await refreshStatus(); r.textContent += " — proceed to ②"; }
+      histRecord(signer.account, { label: `approve(locker, ${amount})`, hash });
+      const ok = await waitMined(hash, r, "approve");
+      histUpdate(signer.account, hash, { status: ok ? "confirmed" : "reverted" });
+      if (ok) { await refreshStatus(); r.textContent += " — proceed to ②"; }
     } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
   };
   $("gLock").onclick = async () => {
     const r = $("gr2");
     if (!signer) { r.textContent = "connect a wallet first"; r.className = "iv bad"; return; }
     try {
-      const amount = BigInt($("gAmount").value.trim());
+      const amount = readAmount(r);
+      if (amount === null) return;
+      const bal = await pairRead(SEL.balanceOf, [signer.account]);
+      if (amount > bal) { r.textContent = `✗ amount ${amount} exceeds your LP balance ${bal} — the pull would revert (transfer_from_failed)`; r.className = "iv bad"; return; }
       const allo = await pairRead(SEL.allowance, [signer.account, cfg.locker]);
       if (allo < amount) { r.textContent = `✗ approved ${allo} < amount ${amount} — run ① first`; r.className = "iv bad"; return; }
       r.textContent = "sign the lock in your wallet…"; r.className = "iv muted";
       const hash = await signer.send("lock_default", [PAIR, amount, "0x0000000000000000000000000000000000000000"]);
-      if (await waitMined(hash, r, "lock_default")) {
+      histRecord(signer.account, { label: `lock_default(pair, ${amount}, self)`, hash });
+      const ok = await waitMined(hash, r, "lock_default");
+      histUpdate(signer.account, hash, { status: ok ? "confirmed" : "reverted" });
+      if (ok) {
         await refreshStatus();
         const [count] = await reader.call("lock_count");
         r.textContent += ` — lock #${count - 1n} created. Press ③ to read it back.`;
@@ -260,6 +369,8 @@ function mount() {
       $("who").textContent = `${signer.account.slice(0, 8)}…${signer.account.slice(-4)} · writes armed`;
       $("who").className = "iv ok";
       $("gr1").textContent = "armed — set the amount and sign ①";
+      histSeed(signer.account);
+      renderHistory();
       refreshStatus();
     } catch (e) {
       $("who").textContent = `✗ ${e.message}`;
