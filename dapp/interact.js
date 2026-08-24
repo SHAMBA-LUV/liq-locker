@@ -181,6 +181,8 @@ const HIST_SEED = {
       hash: "0x113ba138d140f7ec0ca75c8697d69b7e8a931d508515ded6cee1523c5627f38d" },
     { at: "2026-08-24T20:40:00Z", label: "approve(locker, unlimited) on the LUV/WETH pair", status: "confirmed", block: 25827621,
       hash: "0xf2ab3e27efd82cee3cc57c17397119a57d2d6b8615304405f12d1451a963c422" },
+    { at: "2026-08-24T21:00:00Z", label: "lock_default(pair, 0.001 LP, self) → lock #0 — the dust rehearsal", status: "confirmed", block: 25827695,
+      hash: "0x30748af283c482f0bc8746e53f9f40ce1496ed4c6e64c46d5839a25f03670b72" },
   ],
 };
 function histSeed(addr) {
@@ -411,11 +413,12 @@ function mountGuided() {
       if (ok) {
         await refreshStatus();
         const [count] = await reader.call("lock_count");
-        r.append(` — lock #${count - 1n} created. Press ③ to read it back.`);
+        r.append(` — lock #${count - 1n} created:`);
+        await viewNewest(); // the details, read back from the chain, no extra click
       }
     } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
   };
-  $("gView").onclick = async () => {
+  async function viewNewest() {
     const r = $("gr3");
     try {
       const [count] = await reader.call("lock_count");
@@ -431,7 +434,8 @@ function mountGuided() {
       r.append(a);
       r.className = "iv ok";
     } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
-  };
+  }
+  $("gView").onclick = viewNewest;
   refreshStatus();
 }
 
