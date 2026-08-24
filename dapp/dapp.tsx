@@ -42,9 +42,13 @@ export function mountPanel(root: HTMLElement, props: PanelProps): () => void {
     return n;
   };
 
+  let count: bigint | null = null;
+
   async function refresh() {
+    try { count = (await reader.call("lock_count"))[0] as bigint; } catch { /* context only */ }
     try {
       view = await reader.lockView(props.lockId);
+      if (status.kind === "err") status = { kind: "idle" };
     } catch (e) {
       status = { kind: "err", text: (e as Error).message };
     }
@@ -86,7 +90,20 @@ export function mountPanel(root: HTMLElement, props: PanelProps): () => void {
     card.append(head);
 
     if (!view) {
-      card.append(el("p", "lk-muted", "reading the chain…"));
+      // A failed read must never hide behind the loading line: say what the chain said.
+      if (status.kind === "err") {
+        card.append(el("p", "lk-muted",
+          count !== null && props.lockId >= count
+            ? `lock #${props.lockId} does not exist yet — this locker holds ${count} lock${count === 1n ? "" : "s"}.`
+            : `could not read lock #${props.lockId}: ${status.text}`));
+        const a = el("a", "lk-link", "view the verified contract") as HTMLAnchorElement;
+        a.href = `${cfg.explorer}/address/${cfg.locker}#code`;
+        a.target = "_blank";
+        a.rel = "noopener";
+        card.append(a);
+      } else {
+        card.append(el("p", "lk-muted", "reading the chain…"));
+      }
       root.append(card);
       return;
     }
