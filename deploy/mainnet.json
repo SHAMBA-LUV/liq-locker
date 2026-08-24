@@ -1,0 +1,34 @@
+{
+  "contract": "src/liquidity_locker.sol:liquidity_locker",
+  "chainId": 1,
+  "address": "0x111111f70cb3469B5285862d7a4e7Cb53d04f502",
+  "deployedAt": "2026-08-24",
+  "sourceRev": "109ea53",
+  "method": {
+    "kind": "create3d",
+    "factory": "0xa5A2581d564248801cc5e06DbB764c99c170320A",
+    "salt": "liq-locker.piscixoq",
+    "saltBytes32": "0xc977ff1040bf017301df59a963880060a57b3771b672b0ac8283367b26a30e69",
+    "saltEncoding": "bytes32 = keccak256(utf8(saltString))",
+    "note": "The address is f(factory, deployer, salt) only — independent of bytecode and constructor args, identical on every chain. Salts are namespaced by msg.sender: only the deployer below can ever claim this address, on any chain."
+  },
+  "deployer": "0x10f7Ee226B16bea7f365Dc1eDEF159Fc1957D169",
+  "constructorArgs": { "surplus_sink": "0x10f7Ee226B16bea7f365Dc1eDEF159Fc1957D169" },
+  "tx": "0x113ba138d140f7ec0ca75c8697d69b7e8a931d508515ded6cee1523c5627f38d",
+  "block": 25822914,
+  "gasUsed": 1922491,
+  "effectiveGasPriceGwei": 2.132675662,
+  "build": { "solc": "0.8.24", "optimizerRuns": 200, "viaIR": true, "evmVersion": "paris", "bytecodeHash": "none" },
+  "verified": {
+    "status": "Pass - Verified",
+    "route": "Etherscan V2 REST, solidity-standard-json-input",
+    "explorer": "https://etherscan.io/address/0x111111f70cb3469B5285862d7a4e7Cb53d04f502#code"
+  },
+  "runtimeCheck": "on-chain runtime bytecode matches the repo build byte-for-byte; the only diffs are the two immutable SURPLUS_SINK slots holding the constructor argument",
+  "lockTarget": {
+    "pair": "0x57D2085Aa859a145cB107845AD03c0eAAFBD8a31",
+    "token0": "0x2711111111683B8708cb9a48cBf36a51315F8254",
+    "token1": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "note": "Uniswap V2 LUV/WETH — the position the fork suite rehearses and the lock will hold"
+  }
+}

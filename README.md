@@ -6,6 +6,20 @@ the deployer — the power to bring maturity forward.
 The claim "the liquidity is locked" should be checkable, not believable. That is the
 entire product.
 
+## Live on Ethereum mainnet
+
+| | |
+|---|---|
+| `liquidity_locker` | [**`0x111111f70cb3469B5285862d7a4e7Cb53d04f502`**](https://etherscan.io/address/0x111111f70cb3469B5285862d7a4e7Cb53d04f502#code) — source **verified** on Etherscan |
+| deployed | 2026-08-24, [tx `0x113ba138…f38d`](https://etherscan.io/tx/0x113ba138d140f7ec0ca75c8697d69b7e8a931d508515ded6cee1523c5627f38d), via **Create3d** — the same address is reproducible on every EVM chain, by the deployer alone |
+| record · report | [`deploy/mainnet.json`](deploy/mainnet.json) · [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) |
+| interact | [`dapp/`](dapp/) — generated ABI ([`dapp/abi.js`](dapp/abi.js)), pinned to the live address; reads need no wallet |
+
+The six leading 1s are a mined CREATE3 salt, not luck — and not a different trust story:
+the contract has **no owner regardless of who deployed it or how**. The still-open item
+from [`PRODUCTION.md`](PRODUCTION.md) §4 is unchanged by going live: **no independent
+audit yet**.
+
 ## Contracts
 
 | File | License | Purpose |

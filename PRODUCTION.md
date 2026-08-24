@@ -184,4 +184,9 @@ independent audit is exactly that it is not this document — and the sibling re
 argument for paying for one: `luv-locker`'s stateful fuzzer, added the same day as this work,
 found a real solvency bug (D-1) that four earlier test files had missed.
 
-Nothing here has been deployed. No transaction has been sent.
+**Deployment addendum (2026-08-24):** `liquidity_locker` is now live on Ethereum mainnet at
+[`0x111111f70cb3469B5285862d7a4e7Cb53d04f502`](https://etherscan.io/address/0x111111f70cb3469B5285862d7a4e7Cb53d04f502#code),
+deployed via Create3d and source-verified — record in [`deploy/mainnet.json`](deploy/mainnet.json),
+narrative and operational feedback in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). The door and
+verifier are **not** deployed; the bare locker is the whole product for the LP lock, as §1 says.
+Going live changes nothing in §5, and the last box in §4 — the independent audit — is still open.

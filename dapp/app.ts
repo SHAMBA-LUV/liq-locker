@@ -34,10 +34,10 @@ export const ETHEREUM: ChainConfig = {
   name: "Ethereum",
   rpc: "https://ethereum-rpc.publicnode.com",
   explorer: "https://etherscan.io",
-  // Set at deploy time. Left empty rather than pointing at the OLD LUVLocker
-  // (0xe07ACAde…B898), which is a different and unaudited codebase — a dapp that
-  // silently talks to the wrong contract is worse than one that refuses to start.
-  locker: "0x0000000000000000000000000000000000000000",
+  // The live deployment (2026-08-24): deployed via Create3d at salt "liq-locker.piscixoq"
+  // — deployer-namespaced, so this address is reproducible on EVERY chain by the treasury
+  // alone. Etherscan-verified. Record: deploy/mainnet.json.
+  locker: "0x111111f70cb3469B5285862d7a4e7Cb53d04f502",
 };
 
 // ── minimal ABI coder ──────────────────────────────────────────────────────
