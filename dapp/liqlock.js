@@ -30,6 +30,8 @@ const TRAIL = [
     hash: "0xf2ab3e27efd82cee3cc57c17397119a57d2d6b8615304405f12d1451a963c422", block: 25827621 },
   { label: "lock #0 — 0.001 LP, the dust rehearsal, 90 days",
     hash: "0x30748af283c482f0bc8746e53f9f40ce1496ed4c6e64c46d5839a25f03670b72", block: 25827695 },
+  { label: "lock #1 — THE FULL POSITION: 16,419,484.36 LP, 100% of circulating liquidity, 90 days",
+    hash: "0xc2c3c73d2bfa216807e900abb17eff4a98808b45768cf11f23e829e52a10390d", block: 25827873 },
 ];
 
 const $ = (id) => document.getElementById(id);

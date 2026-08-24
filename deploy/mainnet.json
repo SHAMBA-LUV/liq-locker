@@ -10,15 +10,23 @@
     "salt": "liq-locker.piscixoq",
     "saltBytes32": "0xc977ff1040bf017301df59a963880060a57b3771b672b0ac8283367b26a30e69",
     "saltEncoding": "bytes32 = keccak256(utf8(saltString))",
-    "note": "The address is f(factory, deployer, salt) only — independent of bytecode and constructor args, identical on every chain. Salts are namespaced by msg.sender: only the deployer below can ever claim this address, on any chain."
+    "note": "The address is f(factory, deployer, salt) only \u2014 independent of bytecode and constructor args, identical on every chain. Salts are namespaced by msg.sender: only the deployer below can ever claim this address, on any chain."
   },
   "deployer": "0x10f7Ee226B16bea7f365Dc1eDEF159Fc1957D169",
-  "constructorArgs": { "surplus_sink": "0x10f7Ee226B16bea7f365Dc1eDEF159Fc1957D169" },
+  "constructorArgs": {
+    "surplus_sink": "0x10f7Ee226B16bea7f365Dc1eDEF159Fc1957D169"
+  },
   "tx": "0x113ba138d140f7ec0ca75c8697d69b7e8a931d508515ded6cee1523c5627f38d",
   "block": 25822914,
   "gasUsed": 1922491,
   "effectiveGasPriceGwei": 2.132675662,
-  "build": { "solc": "0.8.24", "optimizerRuns": 200, "viaIR": true, "evmVersion": "paris", "bytecodeHash": "none" },
+  "build": {
+    "solc": "0.8.24",
+    "optimizerRuns": 200,
+    "viaIR": true,
+    "evmVersion": "paris",
+    "bytecodeHash": "none"
+  },
   "verified": {
     "status": "Pass - Verified",
     "route": "Etherscan V2 REST, solidity-standard-json-input",
@@ -29,6 +37,30 @@
     "pair": "0x57D2085Aa859a145cB107845AD03c0eAAFBD8a31",
     "token0": "0x2711111111683B8708cb9a48cBf36a51315F8254",
     "token1": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    "note": "Uniswap V2 LUV/WETH — the position the fork suite rehearses and the lock will hold"
+    "note": "Uniswap V2 LUV/WETH \u2014 the position the fork suite rehearses and the lock will hold"
+  },
+  "locks": {
+    "note": "The live locks. Books verified equal to pair.balanceOf(locker) at block 25827873+.",
+    "0": {
+      "label": "dust rehearsal",
+      "amount": "1000000000000000",
+      "tx": "0x30748af283c482f0bc8746e53f9f40ce1496ed4c6e64c46d5839a25f03670b72",
+      "block": 25827695,
+      "unlockAt": 1795382471,
+      "unlockAtISO": "2026-11-22T21:21:11Z"
+    },
+    "1": {
+      "label": "THE FULL POSITION \u2014 100% of circulating LUV/WETH LP; treasury LP = 0 after this tx",
+      "amount": "16419484359707141173121139",
+      "tx": "0xc2c3c73d2bfa216807e900abb17eff4a98808b45768cf11f23e829e52a10390d",
+      "block": 25827873,
+      "unlockAt": 1795384643,
+      "unlockAtISO": "2026-11-22T21:57:23Z"
+    },
+    "maturityDiary": {
+      "T-30": "2026-10-23",
+      "T-7": "2026-11-15",
+      "plan": "extend_default (+90 days) before maturity \u2014 extension is one-way and costs no arithmetic; publish the re-lock before T-7"
+    }
   }
 }

@@ -30,3 +30,5 @@ body { background: #050810; margin: 0; }
   font-weight: 700; font-size: 12px; letter-spacing: .1em; }
 .ipill.ok { color: #7ee2a8; border-color: rgba(126,226,168,.55); background: rgba(126,226,168,.09); }
 .ipill.bad { color: #ff6b6b; border-color: rgba(255,107,107,.55); background: rgba(255,107,107,.09); }
+.ibtn.ready { border-color: #3ff0b0; color: #3ff0b0; box-shadow: 0 0 12px rgba(63,240,176,.25); }
+.ibtn.ready:hover { border-color: #7ff7cc; color: #7ff7cc; }

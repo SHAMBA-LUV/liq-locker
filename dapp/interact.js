@@ -183,6 +183,8 @@ const HIST_SEED = {
       hash: "0xf2ab3e27efd82cee3cc57c17397119a57d2d6b8615304405f12d1451a963c422" },
     { at: "2026-08-24T21:00:00Z", label: "lock_default(pair, 0.001 LP, self) → lock #0 — the dust rehearsal", status: "confirmed", block: 25827695,
       hash: "0x30748af283c482f0bc8746e53f9f40ce1496ed4c6e64c46d5839a25f03670b72" },
+    { at: "2026-08-24T22:15:00Z", label: "lock_default(pair, FULL position, self) → lock #1 — the liquidity is locked", status: "confirmed", block: 25827873,
+      hash: "0xc2c3c73d2bfa216807e900abb17eff4a98808b45768cf11f23e829e52a10390d" },
   ],
 };
 function histSeed(addr) {
@@ -344,6 +346,7 @@ async function refreshStatus() {
       const bal = await pairRead(SEL.balanceOf, [signer.account]);
       const allo = await pairRead(SEL.allowance, [signer.account, cfg.locker]);
       mine = `your LP: ${bal}  ·  approved to locker: ${allo}`;
+      if (allo > 0n && bal > 0n) $("gLock").className = "ibtn ready";
     }
     s.textContent = `active pair: ${activePair}  ·  locks: ${count}  ·  LP held by locker: ${locked}  ·  ${mine}`;
     s.className = "iv ok";
@@ -392,7 +395,7 @@ function mountGuided() {
       histRecord(signer.account, { label: `approve(locker, ${amount})`, hash });
       const ok = await waitMined(hash, r, "approve");
       histUpdate(signer.account, hash, { status: ok ? "confirmed" : "reverted" });
-      if (ok) { await refreshStatus(); r.append(" — proceed to ②"); }
+      if (ok) { await refreshStatus(); r.append(" — ② is ready"); $("gLock").className = "ibtn ready"; }
     } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
   };
   $("gLock").onclick = async () => {
@@ -412,6 +415,7 @@ function mountGuided() {
       histUpdate(signer.account, hash, { status: ok ? "confirmed" : "reverted" });
       if (ok) {
         await refreshStatus();
+        $("gView").className = "ibtn ready";
         const [count] = await reader.call("lock_count");
         r.append(` — lock #${count - 1n} created:`);
         await viewNewest(); // the details, read back from the chain, no extra click
