@@ -57,6 +57,21 @@
     </section>
 
     <section>
+      <h2>LP pairs in your wallet</h2>
+      <p class="imeta">No indexer and no API key: Uniswap V2 pair addresses are CREATE2, so the page
+        <em>computes</em> the pair address for every combination of a known token basket
+        (LUV, WETH, USDC, USDT, DAI, WBTC), asks the chain which exist, and reads your balance in
+        each. Any other pair can be checked by address below. "Use this pair" points the guided
+        path at it.</p>
+      <div class="ictrl">
+        <button id="pairScan" class="ibtn">SCAN the basket</button>
+        <input id="pairManual" class="iarg" placeholder="…or any V2 pair address · 0x…" />
+        <button id="pairCheck" class="ibtn">CHECK address</button>
+      </div>
+      <div id="pairlist"><p class="iv muted">press SCAN — works before connecting, balances appear once connected</p></div>
+    </section>
+
+    <section>
       <h2>read — public, free, instant</h2>
       <p class="imeta">Zero-argument constants are read on load. <code>locks_of</code> is an
         <code>eth_call</code>-only view — never call it from a contract.</p>

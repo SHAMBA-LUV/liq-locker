@@ -221,13 +221,92 @@ function renderHistory() {
   }
 }
 
+// ── LP pairs in the wallet ─────────────────────────────────────────────────
+// No indexer, no API key, no third party: Uniswap V2 pair addresses are CREATE2 —
+// pair = keccak(0xff ++ factory ++ keccak(token0 ++ token1) ++ initCodeHash) — so the
+// page COMPUTES the pair address for every combination of a known token basket and
+// asks the chain two things: does code live there, and what is your balance.
+const V2_FACTORY = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f";
+const V2_INIT = "96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f";
+const BASKET = {
+  LUV: "0x2711111111683B8708cb9a48cBf36a51315F8254",
+  WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+  WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+};
+let activePair = PAIR; // the LUV/WETH default; the pair scanner can re-point it
+
+const unhex = (h) => {
+  const s = h.replace(/^0x/, "");
+  const a = new Uint8Array(s.length / 2);
+  for (let i = 0; i < a.length; i++) a[i] = parseInt(s.substr(i * 2, 2), 16);
+  return a;
+};
+
+async function pairFor(a, b) {
+  const { keccak256 } = await import("./modules/keccak.js");
+  const [t0, t1] = a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a];
+  const salt = keccak256(unhex(t0.slice(2) + t1.slice(2)));
+  const addr = keccak256(unhex("ff" + V2_FACTORY.slice(2) + salt + V2_INIT));
+  return "0x" + addr.slice(-40);
+}
+
+async function scanPairs() {
+  const box = $("pairlist");
+  box.replaceChildren(el("p", "iv muted", "computing pair addresses and asking the chain…"));
+  const who = signer ? signer.account : null;
+  const names = Object.keys(BASKET);
+  const combos = [];
+  for (let i = 0; i < names.length; i++)
+    for (let j = i + 1; j < names.length; j++) combos.push([names[i], names[j]]);
+  const rows = [];
+  await Promise.all(combos.map(async ([na, nb]) => {
+    const p = await pairFor(BASKET[na], BASKET[nb]);
+    const code = await reader.rpc("eth_getCode", [p, "latest"]);
+    if (!code || code === "0x") return; // this pair was never created
+    const bal = who ? await pairRead2(p, SEL.balanceOf, [who]) : null;
+    rows.push({ name: `${na}/${nb}`, pair: p, bal });
+  }));
+  rows.sort((a, b) => (b.bal ?? 0n) > (a.bal ?? 0n) ? 1 : -1);
+  box.replaceChildren();
+  if (!rows.length) { box.append(el("p", "iv muted", "no pairs from the basket exist on-chain")); return; }
+  for (const r of rows) {
+    const line = el("div", "irow");
+    const head = el("div", "isig");
+    head.append(el("code", null, `${r.name} · ${r.pair}${r.pair.toLowerCase() === activePair.toLowerCase() ? "  ← active" : ""}`));
+    line.append(head);
+    const meta = el("div", r.bal && r.bal > 0n ? "iv ok" : "iv muted");
+    meta.append(r.bal === null ? "connect to see your balance"
+      : r.bal === 0n ? "your balance: 0"
+      : `your balance: ${r.bal} LP wei (≈ ${formatUnits(r.bal)} LP)`);
+    line.append(meta);
+    const ctl = el("div", "ictrl");
+    const use = el("button", "ibtn", "use this pair in the guided path");
+    use.onclick = () => { activePair = r.pair; refreshStatus(); scanPairs(); };
+    const a = el("a", "lk-link", "etherscan ↗");
+    a.href = `${cfg.explorer}/address/${r.pair}`; a.target = "_blank"; a.rel = "noopener";
+    ctl.append(use, a);
+    line.append(ctl);
+    box.append(line);
+  }
+}
+
+// balanceOf/allowance against an arbitrary token (the pair-scan needs per-pair reads)
+async function pairRead2(token, selector, addrs) {
+  const data = selector + addrs.map((a) => a.toLowerCase().replace(/^0x/, "").padStart(64, "0")).join("");
+  const out = await reader.rpc("eth_call", [{ to: token, data }, "latest"]);
+  return BigInt(out);
+}
+
 // ── the guided path: status → approve → lock → view ────────────────────────
 const SEL = { balanceOf: "0x70a08231", allowance: "0xdd62ed3e" };
 const padAddr = (a) => a.toLowerCase().replace(/^0x/, "").padStart(64, "0");
 
 async function pairRead(selector, addrs) {
   const data = selector + addrs.map(padAddr).join("");
-  const out = await reader.rpc("eth_call", [{ to: PAIR, data }, "latest"]);
+  const out = await reader.rpc("eth_call", [{ to: activePair, data }, "latest"]);
   return BigInt(out);
 }
 
@@ -251,14 +330,14 @@ async function refreshStatus() {
   const s = $("gstat");
   try {
     const [count] = await reader.call("lock_count");
-    const [locked] = await reader.call("total_locked", [PAIR]);
+    const [locked] = await reader.call("total_locked", [activePair]);
     let mine = "connect to see your LP balance";
     if (signer) {
       const bal = await pairRead(SEL.balanceOf, [signer.account]);
       const allo = await pairRead(SEL.allowance, [signer.account, cfg.locker]);
       mine = `your LP: ${bal}  ·  approved to locker: ${allo}`;
     }
-    s.textContent = `locks: ${count}  ·  LP held by locker: ${locked}  ·  ${mine}`;
+    s.textContent = `active pair: ${activePair}  ·  locks: ${count}  ·  LP held by locker: ${locked}  ·  ${mine}`;
     s.className = "iv ok";
   } catch (e) { s.textContent = `✗ ${e.message}`; s.className = "iv bad"; }
 }
@@ -300,7 +379,7 @@ function mountGuided() {
       r.textContent = "sign the approve in your wallet…"; r.className = "iv muted";
       const hash = await signer.provider.request({
         method: "eth_sendTransaction",
-        params: [{ from: signer.account, to: PAIR, data }],
+        params: [{ from: signer.account, to: activePair, data }],
       });
       histRecord(signer.account, { label: `approve(locker, ${amount})`, hash });
       const ok = await waitMined(hash, r, "approve");
@@ -319,7 +398,7 @@ function mountGuided() {
       const allo = await pairRead(SEL.allowance, [signer.account, cfg.locker]);
       if (allo < amount) { r.textContent = `✗ approved ${allo} < amount ${amount} — run ① first`; r.className = "iv bad"; return; }
       r.textContent = "sign the lock in your wallet…"; r.className = "iv muted";
-      const hash = await signer.send("lock_default", [PAIR, amount, "0x0000000000000000000000000000000000000000"]);
+      const hash = await signer.send("lock_default", [activePair, amount, "0x0000000000000000000000000000000000000000"]);
       histRecord(signer.account, { label: `lock_default(pair, ${amount}, self)`, hash });
       const ok = await waitMined(hash, r, "lock_default");
       histUpdate(signer.account, hash, { status: ok ? "confirmed" : "reverted" });
@@ -360,6 +439,31 @@ function mount() {
   reads.forEach((f) => readBox.append(row(f, false)));
   writes.forEach((f) => writeBox.append(row(f, true)));
 
+  $("pairScan").onclick = scanPairs;
+  $("pairCheck").onclick = async () => {
+    const box = $("pairlist");
+    const p = $("pairManual").value.trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(p)) { box.replaceChildren(el("p", "iv bad", "✗ not an address")); return; }
+    try {
+      // a V2 pair answers token0()/token1(); anything else reverts or returns nothing
+      const t0 = "0x" + (await reader.rpc("eth_call", [{ to: p, data: "0x0dfe1681" }, "latest"])).slice(-40);
+      const t1 = "0x" + (await reader.rpc("eth_call", [{ to: p, data: "0xd21220a7" }, "latest"])).slice(-40);
+      const bal = signer ? await pairRead2(p, SEL.balanceOf, [signer.account]) : null;
+      const line = el("div", "irow");
+      line.append(el("div", "isig"));
+      line.firstChild.append(el("code", null, `pair ${p} · token0 ${t0} · token1 ${t1}`));
+      const meta = el("div", bal && bal > 0n ? "iv ok" : "iv muted");
+      meta.append(bal === null ? "connect to see your balance" : `your balance: ${bal} LP wei (≈ ${formatUnits(bal ?? 0n)} LP)`);
+      line.append(meta);
+      const ctl = el("div", "ictrl");
+      const use = el("button", "ibtn", "use this pair in the guided path");
+      use.onclick = () => { activePair = p; refreshStatus(); };
+      ctl.append(use);
+      line.append(ctl);
+      box.replaceChildren(line);
+    } catch (e) { box.replaceChildren(el("p", "iv bad", `✗ not a readable V2 pair: ${e.message}`)); }
+  };
+
   $("apToken").value = PAIR;
   $("apGo").onclick = () => approve($("apResult"), $("apAmount").value);
 
@@ -372,6 +476,7 @@ function mount() {
       histSeed(signer.account);
       renderHistory();
       refreshStatus();
+      scanPairs(); // balances per pair fill in once we know who you are
     } catch (e) {
       $("who").textContent = `✗ ${e.message}`;
       $("who").className = "iv bad";
