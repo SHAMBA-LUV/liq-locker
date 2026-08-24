@@ -139,6 +139,108 @@ async function approve(resultEl, amountRaw) {
   } catch (e) { resultEl.textContent = `✗ ${e.message}`; resultEl.className = "iv bad"; }
 }
 
+// ── the guided path: status → approve → lock → view ────────────────────────
+const SEL = { balanceOf: "0x70a08231", allowance: "0xdd62ed3e" };
+const padAddr = (a) => a.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+
+async function pairRead(selector, addrs) {
+  const data = selector + addrs.map(padAddr).join("");
+  const out = await reader.rpc("eth_call", [{ to: PAIR, data }, "latest"]);
+  return BigInt(out);
+}
+
+async function waitMined(hash, resultEl, label) {
+  for (let i = 0; i < 60; i++) {
+    const rc = await reader.rpc("eth_getTransactionReceipt", [hash]);
+    if (rc) {
+      const ok = BigInt(rc.status) === 1n;
+      resultEl.textContent = `${label} ${ok ? "✓ confirmed" : "✗ REVERTED"} in block ${Number(BigInt(rc.blockNumber))}`;
+      resultEl.className = ok ? "iv ok" : "iv bad";
+      return ok;
+    }
+    resultEl.textContent = `${label} sent — waiting for the chain… (${2 * (i + 1)}s)`;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  resultEl.textContent = `${label} sent but not yet mined — check the tx on Etherscan`;
+  return false;
+}
+
+async function refreshStatus() {
+  const s = $("gstat");
+  try {
+    const [count] = await reader.call("lock_count");
+    const [locked] = await reader.call("total_locked", [PAIR]);
+    let mine = "connect to see your LP balance";
+    if (signer) {
+      const bal = await pairRead(SEL.balanceOf, [signer.account]);
+      const allo = await pairRead(SEL.allowance, [signer.account, cfg.locker]);
+      mine = `your LP: ${bal}  ·  approved to locker: ${allo}`;
+    }
+    s.textContent = `locks: ${count}  ·  LP held by locker: ${locked}  ·  ${mine}`;
+    s.className = "iv ok";
+  } catch (e) { s.textContent = `✗ ${e.message}`; s.className = "iv bad"; }
+}
+
+function mountGuided() {
+  $("gRefresh").onclick = refreshStatus;
+  $("gDust").onclick = () => { $("gAmount").value = "1000000000000000"; };
+  $("gFull").onclick = async () => {
+    if (!signer) { $("gr1").textContent = "connect a wallet first — the full balance is read from your account"; $("gr1").className = "iv bad"; return; }
+    const bal = await pairRead(SEL.balanceOf, [signer.account]);
+    $("gAmount").value = bal.toString();
+    $("gr1").textContent = `amount set to your full balance, read at click time: ${bal} LP wei`;
+    $("gr1").className = "iv ok";
+  };
+  $("gApprove").onclick = async () => {
+    const r = $("gr1");
+    if (!signer) { r.textContent = "connect a wallet first"; r.className = "iv bad"; return; }
+    try {
+      const amount = BigInt($("gAmount").value.trim());
+      const data = "0x095ea7b3" + padAddr(cfg.locker) + amount.toString(16).padStart(64, "0");
+      r.textContent = "sign the approve in your wallet…"; r.className = "iv muted";
+      const hash = await signer.provider.request({
+        method: "eth_sendTransaction",
+        params: [{ from: signer.account, to: PAIR, data }],
+      });
+      if (await waitMined(hash, r, "approve")) { await refreshStatus(); r.textContent += " — proceed to ②"; }
+    } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
+  };
+  $("gLock").onclick = async () => {
+    const r = $("gr2");
+    if (!signer) { r.textContent = "connect a wallet first"; r.className = "iv bad"; return; }
+    try {
+      const amount = BigInt($("gAmount").value.trim());
+      const allo = await pairRead(SEL.allowance, [signer.account, cfg.locker]);
+      if (allo < amount) { r.textContent = `✗ approved ${allo} < amount ${amount} — run ① first`; r.className = "iv bad"; return; }
+      r.textContent = "sign the lock in your wallet…"; r.className = "iv muted";
+      const hash = await signer.send("lock_default", [PAIR, amount, "0x0000000000000000000000000000000000000000"]);
+      if (await waitMined(hash, r, "lock_default")) {
+        await refreshStatus();
+        const [count] = await reader.call("lock_count");
+        r.textContent += ` — lock #${count - 1n} created. Press ③ to read it back.`;
+      }
+    } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
+  };
+  $("gView").onclick = async () => {
+    const r = $("gr3");
+    try {
+      const [count] = await reader.call("lock_count");
+      if (count === 0n) { r.textContent = "no locks exist yet — run ① and ② first"; r.className = "iv muted"; return; }
+      const id = count - 1n;
+      const v = await reader.lockView(id);
+      r.replaceChildren();
+      r.append(`lock #${id}  ·  token ${v.token}  ·  principal ${v.amount} LP wei  ·  `
+        + `beneficiary ${v.beneficiary}  ·  opens ${new Date(v.unlockAt * 1000).toISOString()}  ·  `
+        + `${v.isLocked ? "🔒 LOCKED" : "matured"}  ·  `);
+      const a = el("a", "lk-link", `open the lock panel (?id=${id})`);
+      a.href = `./index.html?id=${id}`;
+      r.append(a);
+      r.className = "iv ok";
+    } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
+  };
+  refreshStatus();
+}
+
 function mount() {
   $("addr").textContent = cfg.locker;
   $("addr").href = `${cfg.explorer}/address/${cfg.locker}#code`;
@@ -157,10 +259,13 @@ function mount() {
       signer = await Signer.connect(cfg);
       $("who").textContent = `${signer.account.slice(0, 8)}…${signer.account.slice(-4)} · writes armed`;
       $("who").className = "iv ok";
+      $("gr1").textContent = "armed — set the amount and sign ①";
+      refreshStatus();
     } catch (e) {
       $("who").textContent = `✗ ${e.message}`;
       $("who").className = "iv bad";
     }
   };
+  mountGuided();
 }
 mount();

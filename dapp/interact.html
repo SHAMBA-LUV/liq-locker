@@ -20,6 +20,43 @@
     </header>
 
     <section>
+      <h2>lock the pair — the guided path</h2>
+      <p class="imeta">The three steps, in order, against the LUV/WETH pair
+        <code>0x57D2…8a31</code>. The status line below is live chain state and refreshes
+        after every step.</p>
+      <div class="irow">
+        <div id="gstat" class="iv muted">reading chain state…</div>
+        <div class="ictrl">
+          <button id="gRefresh" class="ibtn">refresh status</button>
+        </div>
+      </div>
+      <div class="irow">
+        <div class="isig"><code>① approve — permit the locker to pull the LP</code></div>
+        <div class="ictrl">
+          <input id="gAmount" class="iarg" value="1000000000000000" placeholder="amount · LP wei" />
+          <button id="gDust" class="ibtn">set 0.001 LP (dust rehearsal)</button>
+          <button id="gFull" class="ibtn">set FULL balance (read live)</button>
+          <button id="gApprove" class="ibtn write">① SIGN approve</button>
+        </div>
+        <div id="gr1" class="iv muted">connect a wallet above to arm</div>
+      </div>
+      <div class="irow">
+        <div class="isig"><code>② lock_default — 90 days, extend-only, beneficiary = you</code></div>
+        <div class="ictrl">
+          <button id="gLock" class="ibtn write">② SIGN lock_default</button>
+        </div>
+        <div id="gr2" class="iv muted">runs with the same amount as ①</div>
+      </div>
+      <div class="irow">
+        <div class="isig"><code>③ view — the lock, read back from the chain</code></div>
+        <div class="ictrl">
+          <button id="gView" class="ibtn">③ READ the newest lock</button>
+        </div>
+        <div id="gr3" class="iv muted">works for anyone, wallet or not</div>
+      </div>
+    </section>
+
+    <section>
       <h2>read — public, free, instant</h2>
       <p class="imeta">Zero-argument constants are read on load. <code>locks_of</code> is an
         <code>eth_call</code>-only view — never call it from a contract.</p>
