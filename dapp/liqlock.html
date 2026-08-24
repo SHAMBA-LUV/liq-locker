@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LIQ LOCKER — the liquidity is locked, checkably</title>
+<meta name="description" content="The SHAMBA LUV liquidity locker, live: every lock, every gate, every day remaining — read from Ethereum in your own browser. No wallet, no consent, no trust required." />
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' https://ethereum-rpc.publicnode.com; img-src 'self' data:; style-src 'self'" />
+<link rel="stylesheet" href="./interact.css" />
+<body>
+  <main class="iwrap">
+    <header class="ihead">
+      <h1>⟁ LIQ LOCKER — the liquidity is locked</h1>
+      <p class="imeta"><b>Checkable, not believable.</b> Every number on this page is read from
+        Ethereum by your own browser, right now, over a public RPC. No wallet is asked for and
+        none is needed — reading the chain is free and permissionless, which is the point.</p>
+    </header>
+
+    <section>
+      <h2>the live state</h2>
+      <div class="irow">
+        <div class="isig"><code>locks created</code></div><div id="s-locks" class="iv ok">…</div>
+        <div class="isig"><code>LP held by the locker</code></div><div id="s-locked" class="iv ok">…</div>
+        <div class="isig"><code>share of all liquidity</code></div><div id="s-pct" class="iv ok">…</div>
+        <div class="isig"><code>treasury LP</code></div><div id="s-treasury" class="iv muted">…</div>
+        <div id="s-read" class="iv muted">reading the chain…</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>every lock, in full</h2>
+      <div id="locks"><p class="iv muted">reading…</p></div>
+    </section>
+
+    <section>
+      <h2>what makes this a lock, and not a promise</h2>
+      <p class="imeta"><b>No owner, anywhere.</b> No pause, no rescue, no setter, no proxy, no
+        <code>delegatecall</code>, no <code>SELFDESTRUCT</code>, no <code>tx.origin</code>. Nobody —
+        including the deployer — can bring a maturity forward. Extension is one-way: a lock can be
+        made longer by its beneficiary, never shorter by anyone.</p>
+      <p class="imeta"><b>Two gates.</b> A lock is bound by time, by block height, or by both, and
+        opens only when the later has passed — a clock cannot open it early, a stalling chain cannot
+        strand it.</p>
+      <p class="imeta"><b>Deterministic identity.</b> The locker was deployed via CREATE3: its address
+        is a function of (deployer, salt) alone, reproducible on every EVM chain, claimable only by
+        the SHAMBA LUV treasury. The six leading 1s are mined, not luck — and not a different trust
+        story: the contract has no owner regardless of who deployed it.</p>
+      <p class="imeta"><b>186 tests</b>, including a mainnet-fork rehearsal that locked the real
+        LUV/WETH position and proved it comes back to the wei — and one open item stated plainly:
+        the code is self-audited, not yet independently audited.</p>
+    </section>
+
+    <section>
+      <h2>verify it yourself — the addresses</h2>
+      <div class="irow">
+        <div class="isig"><code>the locker (source verified — the green checkmark)</code></div>
+        <div id="c-locker" class="iv ok"></div>
+        <div class="isig"><code>the LUV/WETH pair (Uniswap V2 — where the price is created)</code></div>
+        <div id="c-pair" class="iv ok"></div>
+        <div class="isig"><code>the LUV token</code></div>
+        <div id="c-luv" class="iv ok"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>the paper trail — transactions, not claims</h2>
+      <div id="trail"></div>
+      <p class="imeta">Source: <a class="lk-link" target="_blank" rel="noopener"
+        href="https://github.com/SHAMBA-LUV/liq-locker">github.com/SHAMBA-LUV/liq-locker</a> —
+        contracts, 186-test record, deployment report, and this page itself.
+        · <a class="lk-link" target="_blank" rel="noopener"
+        href="https://luv.pythai.net">SHAMBA LUV</a></p>
+    </section>
+  </main>
+  <script type="module" src="./liqlock.js"></script>
+</body>
