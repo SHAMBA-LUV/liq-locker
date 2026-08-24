@@ -17,7 +17,7 @@ body{
   background:#0c0814;
   color:var(--ink); font:17px/1.65 system-ui,-apple-system,sans-serif; padding-bottom:90px;
 }
-.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
 .card{
   margin:1.4rem auto; padding:24px 26px; border-radius:18px; background:#171126;
   border:1px solid rgba(255,209,102,.45);
@@ -29,9 +29,9 @@ body{
 .net{margin-left:auto;font-family:var(--mono);font-size:.78rem;color:var(--muted)}
 h1{font-size:1.7rem;line-height:1.25;font-weight:800;margin-bottom:.4em;color:#fff}
 h1 em{font-style:normal;color:var(--gold)}
-.lede{color:#e9e5f2;font-size:1rem}
+.lede{color:#e9e5f2;font-size:1rem;max-width:72ch}
 .grid{display:flex;flex-wrap:wrap;gap:10px;margin:1em 0 .4em}
-.cell{flex:1 1 150px;background:#0c0814;border:1px solid #2c2244;border-radius:12px;padding:.7em .95em}
+.cell{flex:1 1 200px;background:#0c0814;border:1px solid #2c2244;border-radius:12px;padding:.7em .95em}
 .label{display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-weight:600}
 .value{font-family:var(--mono);font-size:1.08rem;word-break:break-word;color:#fff}
 .big{font-size:1.55rem;font-weight:700}
@@ -39,7 +39,7 @@ h1 em{font-style:normal;color:var(--gold)}
 .fine{margin-top:.75em;font-size:.88rem;color:var(--muted)}
 .fine a,.lk{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
 h2{font-family:var(--mono);font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:.7em}
-p.body{color:#f2eef8;font-size:1rem;margin:.6em 0}
+p.body{color:#f2eef8;font-size:1rem;margin:.6em 0;max-width:78ch}
 p.body b{color:var(--gold)}
 .mono{font-family:var(--mono);font-size:.9rem;word-break:break-all;color:#fff}
 .trailrow{display:flex;flex-direction:column;gap:3px;padding:.65em 0;border-top:1px solid #2c2244}
@@ -49,8 +49,10 @@ p.body b{color:var(--gold)}
 .state-ok{color:var(--green);font-weight:700}
 .state-muted{color:var(--muted)}
 .readat{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:.9em;text-align:center}
-footer{max-width:680px;margin:2rem auto 0;padding:0 16px;font-family:var(--mono);font-size:.8rem;color:var(--muted);text-align:center}
+footer{max-width:1080px;margin:2rem auto 0;padding:0 16px;font-family:var(--mono);font-size:.8rem;color:var(--muted);text-align:center}
 footer a{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
+.cardrow{display:grid;grid-template-columns:1fr;gap:0}
+@media (min-width:900px){.cardrow{grid-template-columns:1fr 1fr;gap:22px}.cardrow .card{margin-left:0;margin-right:0}}
 @media (max-width:480px){.card{padding:18px}.cell{flex:1 1 100%}}
 </style>
 </head>
@@ -78,6 +80,7 @@ footer a{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
     <div id="locks"><p class="fine">reading…</p></div>
   </div>
 
+  <div class="cardrow">
   <div class="card">
     <h2>Why this is a lock, not a promise</h2>
     <p class="body"><b>Nobody holds a key.</b> The contract has no owner — no pause, no rescue,
@@ -103,6 +106,7 @@ footer a{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
       <span id="c-luv" class="who"></span></div>
   </div>
 
+  </div>
   <div class="card">
     <h2>The paper trail — transactions, not claims</h2>
     <div id="trail"></div>
