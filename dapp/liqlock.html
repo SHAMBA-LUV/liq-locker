@@ -8,9 +8,9 @@
 <style>
 /* violet/gold glass — the lock panel's idiom, opened up for reading */
 :root{
-  --ink:#f4f0f8; --muted:rgba(244,240,248,.55); --gold:#d4af37; --pink:#ff2d78;
+  --ink:#f4f0f8; --muted:rgba(244,240,248,.78); --gold:#e8c766; --pink:#ff6b9d;
   --violet:#7c3aed; --green:#0ecb81; --bad:#ff6b6b;
-  --glass:linear-gradient(150deg,rgba(124,58,237,.16),rgba(255,45,120,.10) 55%,rgba(10,6,16,.88));
+  --glass:linear-gradient(150deg,rgba(124,58,237,.16),rgba(255,45,120,.10) 55%,rgba(8,5,13,.94));
   --mono:ui-monospace,Menlo,Consolas,monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -32,14 +32,14 @@ body{
 .net{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
 h1{font-size:1.65rem;line-height:1.25;font-weight:800;margin-bottom:.4em}
 h1 em{font-style:normal;color:var(--gold)}
-.lede{color:var(--muted);font-size:.95rem}
+.lede{color:rgba(244,240,248,.85);font-size:.98rem}
 .grid{display:flex;flex-wrap:wrap;gap:10px;margin:1em 0 .4em}
-.cell{flex:1 1 150px;background:rgba(0,0,0,.3);border-radius:12px;padding:.65em .9em}
-.label{display:block;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.cell{flex:1 1 150px;background:rgba(0,0,0,.45);border-radius:12px;padding:.65em .9em}
+.label{display:block;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 .value{font-family:var(--mono);font-size:1.05rem;word-break:break-word}
 .big{font-size:1.5rem;font-weight:700}
 .green{color:var(--green)} .goldc{color:var(--gold)}
-.fine{margin-top:.7em;font-size:.8rem;color:var(--muted)}
+.fine{margin-top:.7em;font-size:.84rem;color:var(--muted)}
 .fine a,.lk{color:var(--pink);text-decoration:none}
 h2{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:.7em}
 p.body{color:var(--ink);font-size:.95rem;margin:.55em 0}
@@ -48,7 +48,7 @@ p.body b{color:var(--gold)}
 .trailrow{display:flex;flex-direction:column;gap:2px;padding:.6em 0;border-top:1px solid rgba(212,175,55,.18)}
 .trailrow:first-of-type{border-top:0}
 .trailrow .what{font-size:.92rem}
-.trailrow .who{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.trailrow .who{font-family:var(--mono);font-size:.8rem;color:rgba(244,240,248,.82)}
 .state-ok{color:var(--green);font-weight:700}
 .state-muted{color:var(--muted)}
 .readat{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-top:.8em;text-align:center}
@@ -119,6 +119,6 @@ footer a{color:var(--pink);text-decoration:none}
   <a href="https://luv.pythai.net/view.html">the price of LUV</a> · <a href="https://luv.pythai.net/engine.html">the engine</a>
   &nbsp;·&nbsp; 1 LUV === 1 LUV
 </footer>
-<script src="liqlock.js?v=2"></script>
+<script src="liqlock.js?v=3"></script>
 </body>
 </html>
