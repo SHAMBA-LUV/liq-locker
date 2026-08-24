@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>liq-locker · interact</title>
+<!-- Same rules as the panel: no CDN, no analytics, CSP-strict, bootstrap in a file. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' https://ethereum-rpc.publicnode.com; img-src 'self' data:; style-src 'self'" />
+<link rel="stylesheet" href="./styled.css" />
+<link rel="stylesheet" href="./interact.css" />
+<body>
+  <main class="iwrap">
+    <header class="ihead">
+      <h1>LIQUIDITY LOCKER · full surface</h1>
+      <p class="imeta">Ethereum mainnet ·
+        <a id="addr" class="lk-link" target="_blank" rel="noopener"></a> · verified source</p>
+      <p class="imeta">Every function below is generated from the ABI of the deployed bytecode.
+        Reads run over a public RPC — no wallet, no consent needed. Writes arm only after you connect.</p>
+      <p class="imeta"><button id="connect" class="ibtn write">CONNECT WALLET</button>
+        <span id="who" class="iv muted">reads work without one</span></p>
+    </header>
+
+    <section>
+      <h2>read — public, free, instant</h2>
+      <p class="imeta">Zero-argument constants are read on load. <code>locks_of</code> is an
+        <code>eth_call</code>-only view — never call it from a contract.</p>
+      <div id="reads"></div>
+    </section>
+
+    <section>
+      <h2>approve — the step before any lock</h2>
+      <p class="imeta"><code>lock_*</code> pulls tokens via <code>transferFrom</code>, so the token
+        (the LUV/WETH pair, prefilled) must approve the locker first. This is the only call on this
+        page that goes to the token instead of the locker.</p>
+      <div class="irow">
+        <div class="ictrl">
+          <input id="apToken" class="iarg" placeholder="token · address" />
+          <input id="apAmount" class="iarg" placeholder="amount · uint256 (wei)" />
+          <button id="apGo" class="ibtn write">SIGN approve(locker, amount)</button>
+        </div>
+        <div id="apResult" class="iv muted">wallet-gated</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>write — beneficiary-bound, extend-only, no owner</h2>
+      <p class="imeta">Anyone may <code>lock_*</code> and <code>sweep_surplus</code>; only a lock's
+        beneficiary may extend, assign, withdraw, or collect it. Nothing here — or anywhere —
+        shortens a lock or pauses the contract. Amounts and durations are raw units:
+        wei for tokens, seconds for time, blocks for the block gate.</p>
+      <div id="writes"></div>
+    </section>
+
+    <section>
+      <h2>events</h2>
+      <p class="imeta"><span id="evlist"></span> · <a id="evlink" class="lk-link" target="_blank"
+        rel="noopener">live log on Etherscan</a></p>
+    </section>
+  </main>
+  <script type="module" src="./interact.js"></script>
+</body>

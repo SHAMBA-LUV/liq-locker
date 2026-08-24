@@ -1,0 +1,28 @@
+/* SPDX-License-Identifier: Apache-2.0
+   interact.css — the full-surface console. Dark, monospace, one column. */
+.iwrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 80px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #cdd5e0; background: transparent; }
+body { background: #050810; margin: 0; }
+.ihead h1 { font-size: 18px; letter-spacing: .16em; color: #ffd166; margin: 0 0 8px; }
+.iwrap h2 { font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
+  color: #ffd166; border-top: 1px solid #1b2537; padding-top: 18px; margin: 28px 0 6px; }
+.imeta { font-size: 12.5px; color: #7a8699; margin: 4px 0; line-height: 1.55; }
+.imeta code { color: #cdd5e0; }
+.irow { border: 1px solid #1b2537; border-radius: 10px; background: #0a101c;
+  padding: 12px 14px; margin: 10px 0; }
+.isig code { color: #cdd5e0; font-size: 13px; }
+.ictrl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center; }
+.iarg { font-family: inherit; background: #050810; border: 1px solid #1b2537; color: #cdd5e0;
+  border-radius: 8px; padding: 8px 10px; font-size: 12.5px; min-width: 240px; flex: 1; }
+.ibtn { font-family: inherit; cursor: pointer; background: none; border: 1px solid #1b2537;
+  color: #cdd5e0; border-radius: 8px; padding: 8px 14px; font-size: 12.5px;
+  transition: border-color .15s, color .15s; }
+.ibtn:hover { border-color: #ffd166; color: #ffd166; }
+.ibtn.write { border-color: #ff4d6d; color: #ff4d6d; }
+.ibtn.write:hover { border-color: #ff8098; color: #ff8098; }
+.iv { font-size: 12.5px; margin-top: 8px; word-break: break-all; }
+.iv.ok { color: #7ee2a8; }
+.iv.bad { color: #ff6b6b; }
+.iv.muted { color: #7a8699; }
+.lk-link { color: #ffd166; text-decoration: none; }
