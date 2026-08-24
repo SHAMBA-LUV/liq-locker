@@ -26,3 +26,7 @@ body { background: #050810; margin: 0; }
 .iv.bad { color: #ff6b6b; }
 .iv.muted { color: #7a8699; }
 .lk-link { color: #ffd166; text-decoration: none; }
+.ipill { display: inline-block; padding: 2px 12px; border-radius: 999px; border: 1px solid;
+  font-weight: 700; font-size: 12px; letter-spacing: .1em; }
+.ipill.ok { color: #7ee2a8; border-color: rgba(126,226,168,.55); background: rgba(126,226,168,.09); }
+.ipill.bad { color: #ff6b6b; border-color: rgba(255,107,107,.55); background: rgba(255,107,107,.09); }

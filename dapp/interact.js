@@ -315,14 +315,20 @@ async function waitMined(hash, resultEl, label) {
     const rc = await reader.rpc("eth_getTransactionReceipt", [hash]);
     if (rc) {
       const ok = BigInt(rc.status) === 1n;
-      resultEl.textContent = `${label} ${ok ? "✓ confirmed" : "✗ REVERTED"} in block ${Number(BigInt(rc.blockNumber))}`;
+      resultEl.replaceChildren();
+      const pill = el("span", ok ? "ipill ok" : "ipill bad", ok ? "\u2713 CONFIRMED" : "\u2717 REVERTED");
+      resultEl.append(pill, ` ${label} \u00b7 block ${Number(BigInt(rc.blockNumber))} \u00b7 `);
+      const a = el("a", "lk-link", "tx \u2197");
+      a.href = `${cfg.explorer}/tx/${hash}`; a.target = "_blank"; a.rel = "noopener";
+      resultEl.append(a);
       resultEl.className = ok ? "iv ok" : "iv bad";
       return ok;
     }
-    resultEl.textContent = `${label} sent — waiting for the chain… (${2 * (i + 1)}s)`;
+    resultEl.textContent = `${label} sent \u2014 waiting for the chain\u2026 (${2 * (i + 1)}s)`;
+    resultEl.className = "iv muted";
     await new Promise((r) => setTimeout(r, 2000));
   }
-  resultEl.textContent = `${label} sent but not yet mined — check the tx on Etherscan`;
+  resultEl.textContent = `${label} sent but not yet mined \u2014 check the tx on Etherscan`;
   return false;
 }
 
@@ -384,7 +390,7 @@ function mountGuided() {
       histRecord(signer.account, { label: `approve(locker, ${amount})`, hash });
       const ok = await waitMined(hash, r, "approve");
       histUpdate(signer.account, hash, { status: ok ? "confirmed" : "reverted" });
-      if (ok) { await refreshStatus(); r.textContent += " — proceed to ②"; }
+      if (ok) { await refreshStatus(); r.append(" — proceed to ②"); }
     } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
   };
   $("gLock").onclick = async () => {
@@ -405,7 +411,7 @@ function mountGuided() {
       if (ok) {
         await refreshStatus();
         const [count] = await reader.call("lock_count");
-        r.textContent += ` — lock #${count - 1n} created. Press ③ to read it back.`;
+        r.append(` — lock #${count - 1n} created. Press ③ to read it back.`);
       }
     } catch (e) { r.textContent = `✗ ${e.message}`; r.className = "iv bad"; }
   };
