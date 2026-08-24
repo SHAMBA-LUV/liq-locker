@@ -61,6 +61,11 @@ footer a{color:var(--pink);text-decoration:underline;text-underline-offset:3px}
 .cardrow{display:grid;grid-template-columns:1fr;gap:0}
 @media (min-width:900px){.cardrow{grid-template-columns:1fr 1fr;gap:22px}.cardrow .card{margin-left:0;margin-right:0}}
 @media (max-width:480px){.card{padding:18px}.cell{flex:1 1 100%}}
+
+/* every link declares itself: candle green on hover, sitewide on this page */
+a{transition:color .15s,border-color .15s,text-decoration-color .15s}
+a:hover{color:#0ecb81 !important;border-bottom-color:#0ecb81 !important;text-decoration-color:#0ecb81 !important}
+a:hover b,a:hover code,a:hover span{color:#0ecb81 !important}
 </style>
 </head>
 <body>
