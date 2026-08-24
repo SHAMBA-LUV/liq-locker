@@ -90,8 +90,34 @@ factory = the canonical Uniswap V2 factory — all re-verified on-chain pre-depl
 runbook order is unchanged: **dust rehearsal first** (approve 0.001 LP →
 `lock_default`), then the full position, then extend as the commitment grows.
 
+## The locks — the position committed, same day
+
+The runbook was followed to the letter: dust first, then everything.
+
+| | lock #0 — the rehearsal | lock #1 — the position |
+|---|---|---|
+| amount | 0.001 LP (`1000000000000000` wei) | **16,419,484.359707 LP** (`16419484359707141173121139` wei) |
+| tx | [`0x30748af2…0b72`](https://etherscan.io/tx/0x30748af283c482f0bc8746e53f9f40ce1496ed4c6e64c46d5839a25f03670b72) · block 25,827,695 | [`0xc2c3c73d…390d`](https://etherscan.io/tx/0xc2c3c73d2bfa216807e900abb17eff4a98808b45768cf11f23e829e52a10390d) · block 25,827,873 |
+| matures | 2026-11-22T21:21:11Z | **2026-11-22T21:57:23Z** |
+
+After lock #1: the treasury's LP balance is **exactly 0**, the locker holds **100% of
+circulating LUV/WETH liquidity** (totalSupply − the burned `MINIMUM_LIQUIDITY`), and
+`total_locked(pair) == pair.balanceOf(locker)` to the wei — the books equal the live
+balance, which is invariant 1 of the test suite holding on mainnet.
+
+**The public proof lives at [luv.pythai.net/liqlock.html](https://luv.pythai.net/liqlock.html)**
+(the same page ships in [`dapp/liqlock.html`](../dapp/liqlock.html)): read-only, wallet-free,
+every number an `eth_call` the visitor's own browser makes. The per-address transaction
+ledger is in [`.history/`](../.history/).
+
+**Maturity diary: T−30 = 2026-10-23 · T−7 = 2026-11-15.** The re-lock plan, published here
+before those dates as the runbook requires: `extend_default(1)` — +90 days measured from the
+*current* maturity — signed by the beneficiary before 2026-11-22. Extension is one-way;
+nothing can shorten it. The one unrecoverable case remains the beneficiary losing the key:
+`assign()` succession exists for exactly that, and the key is re-checked at each diary date.
+
 ## What this changes in PRODUCTION.md
 
-§4's checklist gains its first real-world ticks (deploy, verification); the last box —
-**an independent audit** — remains open and remains the gate it always was. The contract
-being live does not close it.
+§4's checklist gains its real-world ticks (deploy, verification, the dust rehearsal, the
+diary); the last box — **an independent audit** — remains open and remains the gate it
+always was. The contract being live, and even the position being locked, does not close it.

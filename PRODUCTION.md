@@ -83,12 +83,17 @@ permissionless precisely because it cannot choose a destination or an amount.
 
 - [x] `make sizes` — every contract under 24,576 B
 - [x] Rehearsal proven in CI against the real pair (`test_Fork_RehearsalDustLockClearsEndToEnd`)
-- [ ] `SURPLUS_SINK` verified on a testnet by actually sweeping to it
+- [ ] `SURPLUS_SINK` verified on a testnet by actually sweeping to it *(skipped — the sink is the
+      deployer's own treasury, read back on-chain post-deploy)*
 - [ ] Beneficiary is a contract you control or a key you can still sign with **at maturity** —
-      locks outlive the wallets people expect them to
-- [ ] Verifier choice made deliberately (skip if deploying the bare locker) — **see §5**
-- [ ] Dust rehearsal end to end, on mainnet, before the real position
-- [ ] Maturity diarized at T−30d and T−7d, with the re-lock plan published *before* it
+      locks outlive the wallets people expect them to *(the treasury key; the operator's assertion,
+      re-checked at each diary date)*
+- [x] Verifier choice made deliberately — **the bare locker was deployed; no door, no verifier**
+- [x] Dust rehearsal end to end, on mainnet, before the real position — lock #0, 0.001 LP,
+      [tx `0x30748af2…0b72`](https://etherscan.io/tx/0x30748af283c482f0bc8746e53f9f40ce1496ed4c6e64c46d5839a25f03670b72)
+- [x] Maturity diarized at T−30d (**2026-10-23**) and T−7d (**2026-11-15**), re-lock plan
+      (`extend_default`, +90d from current maturity) published in
+      [`deploy/mainnet.json`](deploy/mainnet.json) *before* the dates
 - [ ] **Independent audit**
 
 The first six are yours to do. The last one is the gate.

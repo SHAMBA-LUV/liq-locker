@@ -12,7 +12,9 @@ entire product.
 |---|---|
 | `liquidity_locker` | [**`0x111111f70cb3469B5285862d7a4e7Cb53d04f502`**](https://etherscan.io/address/0x111111f70cb3469B5285862d7a4e7Cb53d04f502#code) — source **verified** on Etherscan |
 | deployed | 2026-08-24, [tx `0x113ba138…f38d`](https://etherscan.io/tx/0x113ba138d140f7ec0ca75c8697d69b7e8a931d508515ded6cee1523c5627f38d), via **Create3d** — the same address is reproducible on every EVM chain, by the deployer alone |
-| record · report | [`deploy/mainnet.json`](deploy/mainnet.json) · [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) |
+| **🔒 the liquidity is LOCKED** | **100% of circulating LUV/WETH LP** — 16,419,484.359707 LP in lock #1 ([tx `0xc2c3c73d…390d`](https://etherscan.io/tx/0xc2c3c73d2bfa216807e900abb17eff4a98808b45768cf11f23e829e52a10390d), block 25,827,873); the treasury's LP balance is **exactly 0**. Matures **2026-11-22T21:57:23Z**, extend-only, no owner to ask |
+| public proof | [**luv.pythai.net/liqlock.html**](https://luv.pythai.net/liqlock.html) — live-read by each visitor's own browser; also served from [`dapp/liqlock.html`](dapp/liqlock.html) |
+| record · report | [`deploy/mainnet.json`](deploy/mainnet.json) · [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) · [`.history/`](.history/) |
 | interact | [`dapp/`](dapp/) — generated ABI ([`dapp/abi.js`](dapp/abi.js)), pinned to the live address; reads need no wallet |
 
 The six leading 1s are a mined CREATE3 salt, not luck — and not a different trust story:
