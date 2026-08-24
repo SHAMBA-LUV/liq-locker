@@ -1,75 +1,124 @@
 <!doctype html>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LIQ LOCKER — the liquidity is locked, checkably</title>
-<meta name="description" content="The SHAMBA LUV liquidity locker, live: every lock, every gate, every day remaining — read from Ethereum in your own browser. No wallet, no consent, no trust required." />
-<meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; connect-src 'self' https://ethereum-rpc.publicnode.com; img-src 'self' data:; style-src 'self'" />
-<link rel="stylesheet" href="./interact.css" />
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LIQ LOCKER — the liquidity is locked · SHAMBA LUV</title>
+<meta name="description" content="The SHAMBA LUV liquidity locker, live: every lock, every gate, every day remaining — read from Ethereum by your own browser. No wallet, no consent, no trust required.">
+<style>
+/* violet/gold glass — the lock panel's idiom, opened up for reading */
+:root{
+  --ink:#f4f0f8; --muted:rgba(244,240,248,.55); --gold:#d4af37; --pink:#ff2d78;
+  --violet:#7c3aed; --green:#0ecb81; --bad:#ff6b6b;
+  --glass:linear-gradient(150deg,rgba(124,58,237,.16),rgba(255,45,120,.10) 55%,rgba(10,6,16,.88));
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#0a0610 radial-gradient(1200px 600px at 70% -10%,rgba(124,58,237,.18),transparent 60%),
+             #0a0610 radial-gradient(900px 500px at 10% 110%,rgba(255,45,120,.10),transparent 60%);
+  color:var(--ink); font:16px/1.6 system-ui,-apple-system,sans-serif; padding-bottom:90px;
+}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+.card{
+  margin:1.4rem auto; padding:22px 24px; border-radius:20px; background:var(--glass);
+  border:1px solid rgba(212,175,55,.35);
+  box-shadow:0 18px 50px rgba(124,58,237,.28), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+}
+.head{display:flex;align-items:center;gap:.55em;margin-bottom:.9em}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);flex:none}
+.kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;color:var(--gold);font-weight:700}
+.net{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+h1{font-size:1.65rem;line-height:1.25;font-weight:800;margin-bottom:.4em}
+h1 em{font-style:normal;color:var(--gold)}
+.lede{color:var(--muted);font-size:.95rem}
+.grid{display:flex;flex-wrap:wrap;gap:10px;margin:1em 0 .4em}
+.cell{flex:1 1 150px;background:rgba(0,0,0,.3);border-radius:12px;padding:.65em .9em}
+.label{display:block;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.value{font-family:var(--mono);font-size:1.05rem;word-break:break-word}
+.big{font-size:1.5rem;font-weight:700}
+.green{color:var(--green)} .goldc{color:var(--gold)}
+.fine{margin-top:.7em;font-size:.8rem;color:var(--muted)}
+.fine a,.lk{color:var(--pink);text-decoration:none}
+h2{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:.7em}
+p.body{color:var(--ink);font-size:.95rem;margin:.55em 0}
+p.body b{color:var(--gold)}
+.mono{font-family:var(--mono);font-size:.85rem;word-break:break-all}
+.trailrow{display:flex;flex-direction:column;gap:2px;padding:.6em 0;border-top:1px solid rgba(212,175,55,.18)}
+.trailrow:first-of-type{border-top:0}
+.trailrow .what{font-size:.92rem}
+.trailrow .who{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.state-ok{color:var(--green);font-weight:700}
+.state-muted{color:var(--muted)}
+.readat{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-top:.8em;text-align:center}
+footer{max-width:680px;margin:2rem auto 0;padding:0 16px;font-family:var(--mono);font-size:.75rem;color:var(--muted);text-align:center}
+footer a{color:var(--pink);text-decoration:none}
+@media (max-width:480px){.card{padding:18px}.cell{flex:1 1 100%}}
+</style>
+</head>
 <body>
-  <main class="iwrap">
-    <header class="ihead">
-      <h1>⟁ LIQ LOCKER — the liquidity is locked</h1>
-      <p class="imeta"><b>Checkable, not believable.</b> Every number on this page is read from
-        Ethereum by your own browser, right now, over a public RPC. No wallet is asked for and
-        none is needed — reading the chain is free and permissionless, which is the point.</p>
-    </header>
+<main class="wrap">
 
-    <section>
-      <h2>the live state</h2>
-      <div class="irow">
-        <div class="isig"><code>locks created</code></div><div id="s-locks" class="iv ok">…</div>
-        <div class="isig"><code>LP held by the locker</code></div><div id="s-locked" class="iv ok">…</div>
-        <div class="isig"><code>share of all liquidity</code></div><div id="s-pct" class="iv ok">…</div>
-        <div class="isig"><code>treasury LP</code></div><div id="s-treasury" class="iv muted">…</div>
-        <div id="s-read" class="iv muted">reading the chain…</div>
-      </div>
-    </section>
+  <div class="card">
+    <div class="head"><span class="dot"></span><span class="kicker">LIQUIDITY LOCKER</span>
+      <span class="net">Ethereum · live</span></div>
+    <h1>The liquidity is <em>locked</em>.<br>Check it yourself.</h1>
+    <p class="lede">Every number on this page is read from Ethereum by <b>your own browser</b>,
+      right now. No wallet is asked for and none is needed — reading the chain is free and
+      permissionless. That's the point: a lock you can verify beats a promise you have to trust.</p>
+    <div class="grid">
+      <div class="cell"><span class="label">LP locked</span><span id="s-locked" class="value big green">…</span></div>
+      <div class="cell"><span class="label">Share of all liquidity</span><span id="s-pct" class="value big">…</span></div>
+      <div class="cell"><span class="label">Locks</span><span id="s-locks" class="value big goldc">…</span></div>
+    </div>
+    <p id="s-treasury" class="fine">…</p>
+    <p id="s-read" class="readat">reading the chain…</p>
+  </div>
 
-    <section>
-      <h2>every lock, in full</h2>
-      <div id="locks"><p class="iv muted">reading…</p></div>
-    </section>
+  <div class="card">
+    <h2>Every lock, in full</h2>
+    <div id="locks"><p class="fine">reading…</p></div>
+  </div>
 
-    <section>
-      <h2>what makes this a lock, and not a promise</h2>
-      <p class="imeta"><b>No owner, anywhere.</b> No pause, no rescue, no setter, no proxy, no
-        <code>delegatecall</code>, no <code>SELFDESTRUCT</code>, no <code>tx.origin</code>. Nobody —
-        including the deployer — can bring a maturity forward. Extension is one-way: a lock can be
-        made longer by its beneficiary, never shorter by anyone.</p>
-      <p class="imeta"><b>Two gates.</b> A lock is bound by time, by block height, or by both, and
-        opens only when the later has passed — a clock cannot open it early, a stalling chain cannot
-        strand it.</p>
-      <p class="imeta"><b>Deterministic identity.</b> The locker was deployed via CREATE3: its address
-        is a function of (deployer, salt) alone, reproducible on every EVM chain, claimable only by
-        the SHAMBA LUV treasury. The six leading 1s are mined, not luck — and not a different trust
-        story: the contract has no owner regardless of who deployed it.</p>
-      <p class="imeta"><b>186 tests</b>, including a mainnet-fork rehearsal that locked the real
-        LUV/WETH position and proved it comes back to the wei — and one open item stated plainly:
-        the code is self-audited, not yet independently audited.</p>
-    </section>
+  <div class="card">
+    <h2>Why this is a lock, not a promise</h2>
+    <p class="body"><b>Nobody holds a key.</b> The contract has no owner — no pause, no rescue,
+      no upgrade, no admin of any kind. Not even the team that deployed it can open a lock early.</p>
+    <p class="body"><b>Time only moves one way.</b> A lock can be made <em>longer</em> by its
+      beneficiary, never shorter by anyone. Two independent gates — the clock and the block
+      height — must both pass before anything moves.</p>
+    <p class="body"><b>One address, every chain.</b> The locker was deployed deterministically
+      (CREATE3): its address is reproducible on any EVM chain and claimable only by the SHAMBA LUV
+      treasury. The six leading 1s are mined, not luck.</p>
+    <p class="body"><b>Tested against the real thing.</b> 186 tests, including a mainnet-fork
+      rehearsal that locked the actual LUV/WETH position and proved it comes back to the wei.
+      Stated plainly: the code is self-audited, not yet independently audited.</p>
+  </div>
 
-    <section>
-      <h2>verify it yourself — the addresses</h2>
-      <div class="irow">
-        <div class="isig"><code>the locker (source verified — the green checkmark)</code></div>
-        <div id="c-locker" class="iv ok"></div>
-        <div class="isig"><code>the LUV/WETH pair (Uniswap V2 — where the price is created)</code></div>
-        <div id="c-pair" class="iv ok"></div>
-        <div class="isig"><code>the LUV token</code></div>
-        <div id="c-luv" class="iv ok"></div>
-      </div>
-    </section>
+  <div class="card">
+    <h2>Verify it yourself</h2>
+    <div class="trailrow"><span class="what">The locker — source verified on Etherscan (the green checkmark)</span>
+      <span id="c-locker" class="who"></span></div>
+    <div class="trailrow"><span class="what">The LUV/WETH pair — Uniswap V2, where the price is created</span>
+      <span id="c-pair" class="who"></span></div>
+    <div class="trailrow"><span class="what">The LUV token</span>
+      <span id="c-luv" class="who"></span></div>
+  </div>
 
-    <section>
-      <h2>the paper trail — transactions, not claims</h2>
-      <div id="trail"></div>
-      <p class="imeta">Source: <a class="lk-link" target="_blank" rel="noopener"
-        href="https://github.com/SHAMBA-LUV/liq-locker">github.com/SHAMBA-LUV/liq-locker</a> —
-        contracts, 186-test record, deployment report, and this page itself.
-        · <a class="lk-link" target="_blank" rel="noopener"
-        href="https://luv.pythai.net">SHAMBA LUV</a></p>
-    </section>
-  </main>
-  <script type="module" src="./liqlock.js"></script>
+  <div class="card">
+    <h2>The paper trail — transactions, not claims</h2>
+    <div id="trail"></div>
+    <p class="fine">Source, tests and deployment report:
+      <a target="_blank" rel="noopener" href="https://github.com/SHAMBA-LUV/liq-locker">github.com/SHAMBA-LUV/liq-locker</a></p>
+  </div>
+
+</main>
+<footer>
+  <a href="https://luv.pythai.net">SHAMBA LUV</a> · <a href="https://luv.pythai.net/faq.html">FAQ</a> ·
+  <a href="https://luv.pythai.net/view.html">the price of LUV</a> · <a href="https://luv.pythai.net/engine.html">the engine</a>
+  &nbsp;·&nbsp; 1 LUV === 1 LUV
+</footer>
+<script src="liqlock.js?v=2"></script>
 </body>
+</html>

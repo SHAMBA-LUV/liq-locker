@@ -1,16 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
-// liqlock.js — the public proof page. READ-ONLY: no wallet, no writes, no consent asked,
-// because none is needed — every number on this page is an eth_call anyone can repeat.
-// The claim "the liquidity is locked" should be checkable, not believable.
-import { ETHEREUM, Reader, formatUnits } from "./app.js";
+// liqlock.js — the public proof page for the SHAMBA LUV liquidity locker.
+// READ-ONLY and self-contained: no wallet, no library, no build step. Selectors are
+// hardcoded from the verified ABI; every number is an eth_call your browser makes.
+// Contract source + tests: https://github.com/SHAMBA-LUV/liq-locker
+"use strict";
 
-const cfg = ETHEREUM;
-const reader = new Reader(cfg);
+const RPC = "https://ethereum-rpc.publicnode.com";
+const LOCKER = "0x111111f70cb3469B5285862d7a4e7Cb53d04f502";
 const PAIR = "0x57D2085Aa859a145cB107845AD03c0eAAFBD8a31";
 const LUV = "0x2711111111683B8708cb9a48cBf36a51315F8254";
 const TREASURY = "0x10f7Ee226B16bea7f365Dc1eDEF159Fc1957D169";
+const EXPLORER = "https://etherscan.io";
 
-// The paper trail — transaction hashes are facts, not claims.
+// selectors, from the Etherscan-verified ABI (cast sig)
+const SEL = {
+  lock_count: "0x293f2067",           // lock_count()
+  total_locked: "0x1f15f418",         // total_locked(address)
+  lock_at: "0xe1377a5b",              // lock_at(uint256) → (token, beneficiary, amount, unlock_at, withdrawn)
+  time_remaining: "0x5c036855",       // time_remaining(uint256) → (seconds_left, blocks_left)
+  is_locked: "0x5f042807",            // is_locked(uint256)
+  totalSupply: "0x18160ddd",
+  balanceOf: "0x70a08231",
+};
+
 const TRAIL = [
   { label: "deploy — Create3d → the locker, at a deterministic every-chain address",
     hash: "0x113ba138d140f7ec0ca75c8697d69b7e8a931d508515ded6cee1523c5627f38d", block: 25822914 },
@@ -28,73 +40,100 @@ const el = (tag, cls, text) => {
   return n;
 };
 const link = (href, text) => {
-  const a = el("a", "lk-link", text);
+  const a = el("a", "lk", text);
   a.href = href; a.target = "_blank"; a.rel = "noopener";
   return a;
 };
-const pad = (a) => a.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+const pad = (v) => (typeof v === "bigint" ? v.toString(16) : v.toLowerCase().replace(/^0x/, "")).padStart(64, "0");
 
-async function erc20(token, selector, addrs = []) {
-  const out = await reader.rpc("eth_call", [{ to: token, data: selector + addrs.map(pad).join("") }, "latest"]);
-  return BigInt(out);
+async function rpc(method, params) {
+  const res = await fetch(RPC, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || "rpc error");
+  return json.result;
+}
+const call = (to, data) => rpc("eth_call", [{ to, data }, "latest"]);
+const words = (hex) => {
+  const b = hex.replace(/^0x/, "");
+  return Array.from({ length: b.length / 64 }, (_, i) => BigInt("0x" + (b.slice(i * 64, i * 64 + 64) || "0")));
+};
+const addr = (w) => "0x" + w.toString(16).padStart(40, "0");
+
+// full-width integer → human units at 18 decimals; rounding is display-only
+function fmt18(v, places = 6) {
+  const neg = v < 0n; if (neg) v = -v;
+  const whole = v / 10n ** 18n;
+  const frac = (v % 10n ** 18n).toString().padStart(18, "0").slice(0, places);
+  return `${neg ? "-" : ""}${whole}${places ? "." + frac : ""}`;
 }
 
 async function refresh() {
   try {
-    const [count] = await reader.call("lock_count");
-    const [locked] = await reader.call("total_locked", [PAIR]);
-    const supply = await erc20(PAIR, "0x18160ddd");           // pair totalSupply
-    const treasuryLP = await erc20(PAIR, "0x70a08231", [TREASURY]);
-    const circulating = supply - 1000n;                        // MINIMUM_LIQUIDITY is burned
+    const [count] = words(await call(LOCKER, SEL.lock_count));
+    const [locked] = words(await call(LOCKER, SEL.total_locked + pad(PAIR)));
+    const [supply] = words(await call(PAIR, SEL.totalSupply));
+    const [treasuryLP] = words(await call(PAIR, SEL.balanceOf + pad(TREASURY)));
+    const circulating = supply - 1000n; // MINIMUM_LIQUIDITY is burned at pair creation
     const pct = circulating > 0n ? Number(locked) / Number(circulating) * 100 : 0;
 
     $("s-locks").textContent = count.toString();
-    $("s-locked").textContent = `${locked} LP wei  (≈ ${formatUnits(locked)} LP)`;
-    $("s-pct").textContent = `${(pct === 0 ? "0" : pct < 0.01 ? pct.toExponential(2) : pct.toFixed(4))} % of all circulating LUV/WETH liquidity`;
-    $("s-treasury").textContent = `${treasuryLP} LP wei  (≈ ${formatUnits(treasuryLP)} LP) still unlocked in the treasury`;
-    $("s-read").textContent = `read live at ${new Date().toISOString()} — refresh the page to re-ask the chain`;
+    $("s-locked").textContent = `${fmt18(locked, locked < 10n ** 18n ? 6 : 3)} LP`;
+    $("s-pct").textContent = pct === 0 ? "0 %" : pct < 0.01 ? `${pct.toExponential(1)} %` : `${pct.toFixed(2)} %`;
+    $("s-treasury").textContent = `Locked, exactly: ${locked} LP wei. Treasury still holds ${fmt18(treasuryLP, 3)} LP unlocked (${treasuryLP} wei).`;
+    $("s-read").textContent = `read live from Ethereum at ${new Date().toUTCString()} — reload to re-ask the chain`;
 
     const box = $("locks");
     box.replaceChildren();
-    if (count === 0n) { box.append(el("p", "iv muted", "no locks yet")); return; }
-    const now = Math.floor(Date.now() / 1000);
+    if (count === 0n) { box.append(el("p", "fine", "no locks yet")); return; }
     for (let id = 0n; id < count; id++) {
-      const [token, beneficiary, amount, unlockAt, withdrawn] = await reader.call("lock_at", [id]);
-      const [secsLeft, blocksLeft] = await reader.call("time_remaining", [id]);
-      const [isLocked] = await reader.call("is_locked", [id]);
-      const ua = Number(unlockAt);
+      const w = words(await call(LOCKER, SEL.lock_at + pad(id)));
+      const [token, beneficiary, amount, unlockAt, withdrawn] = [addr(w[0]), addr(w[1]), w[2], Number(w[3]), w[4] !== 0n];
+      const [secsLeft, blocksLeft] = words(await call(LOCKER, SEL.time_remaining + pad(id)));
+      const isLocked = words(await call(LOCKER, SEL.is_locked + pad(id)))[0] !== 0n;
       const leftDays = Number(secsLeft) / 86400;
-      const row = el("div", "irow");
-      const head = el("div", "isig");
-      head.append(el("code", null, `lock #${id} — ${formatUnits(amount)} LP (${amount} wei)`));
-      row.append(head);
-      const meta = el("div", isLocked ? "iv ok" : "iv muted");
-      meta.append(
-        `${withdrawn ? "withdrawn" : isLocked ? "🔒 LOCKED" : "matured, unclaimed"}  ·  `
-        + `opens ${new Date(ua * 1000).toISOString()}  ·  ${leftDays.toFixed(1)} days left`
-        + (blocksLeft > 0n ? `  ·  block gate: ${blocksLeft} blocks` : "  ·  time gate only")
-        + `  ·  token ${token.slice(0, 10)}…  ·  beneficiary ${beneficiary.slice(0, 10)}…`);
-      row.append(meta);
-      box.append(row);
+      const opens = new Date(unlockAt * 1000).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+      const head = el("div", "head");
+      head.append(el("span", "dot"), el("span", "kicker", `LOCK #${id}`));
+      head.append(el("span", isLocked ? "net state-ok" : "net state-muted",
+        withdrawn ? "withdrawn" : isLocked ? "🔒 LOCKED" : "matured, unclaimed"));
+      box.append(head);
+
+      const grid = el("div", "grid");
+      const cell = (label, value, cls) => {
+        const c = el("div", "cell");
+        c.append(el("span", "label", label), el("span", "value " + (cls || ""), value));
+        return c;
+      };
+      grid.append(
+        cell("Amount", `${fmt18(amount, amount < 10n ** 18n ? 6 : 3)} LP`, "green"),
+        cell("Opens", opens),
+        cell("Days left", leftDays.toFixed(1), "big goldc"),
+        cell("Gates", blocksLeft > 0n ? "time + block height" : "time"));
+      box.append(grid);
+      box.append(el("p", "fine",
+        `Exactly ${amount} LP wei · beneficiary ${beneficiary} · unlocks ${new Date(unlockAt * 1000).toUTCString()}`));
     }
   } catch (e) {
-    $("s-read").textContent = `read failed: ${e.message} — the chain is the source; try again`;
+    $("s-read").textContent = `read failed: ${e.message} — the chain is the source; reload to try again`;
   }
 }
 
 function mountStatic() {
-  $("c-locker").replaceChildren(link(`${cfg.explorer}/address/${cfg.locker}#code`, cfg.locker));
-  $("c-pair").replaceChildren(link(`${cfg.explorer}/address/${PAIR}`, PAIR));
-  $("c-luv").replaceChildren(link(`${cfg.explorer}/token/${LUV}`, LUV));
+  $("c-locker").replaceChildren(link(`${EXPLORER}/address/${LOCKER}#code`, LOCKER));
+  $("c-pair").replaceChildren(link(`${EXPLORER}/address/${PAIR}`, PAIR));
+  $("c-luv").replaceChildren(link(`${EXPLORER}/token/${LUV}`, LUV));
   const trail = $("trail");
   for (const t of TRAIL) {
-    const row = el("div", "irow");
-    row.append(el("div", "isig"));
-    row.firstChild.append(el("code", null, t.label));
-    const meta = el("div", "iv ok");
-    meta.append(`block ${t.block} · `);
-    meta.append(link(`${cfg.explorer}/tx/${t.hash}`, t.hash.slice(0, 22) + "… ↗"));
-    row.append(meta);
+    const row = el("div", "trailrow");
+    row.append(el("span", "what", t.label));
+    const who = el("span", "who");
+    who.append(`block ${t.block} · `);
+    who.append(link(`${EXPLORER}/tx/${t.hash}`, t.hash.slice(0, 22) + "… ↗"));
+    row.append(who);
     trail.append(row);
   }
 }
