@@ -46,11 +46,11 @@ async function refresh() {
     const supply = await erc20(PAIR, "0x18160ddd");           // pair totalSupply
     const treasuryLP = await erc20(PAIR, "0x70a08231", [TREASURY]);
     const circulating = supply - 1000n;                        // MINIMUM_LIQUIDITY is burned
-    const pct = circulating > 0n ? Number(locked * 1_000_000n / circulating) / 10_000 : 0;
+    const pct = circulating > 0n ? Number(locked) / Number(circulating) * 100 : 0;
 
     $("s-locks").textContent = count.toString();
     $("s-locked").textContent = `${locked} LP wei  (≈ ${formatUnits(locked)} LP)`;
-    $("s-pct").textContent = `${pct.toFixed(4)} % of all circulating LUV/WETH liquidity`;
+    $("s-pct").textContent = `${(pct === 0 ? "0" : pct < 0.01 ? pct.toExponential(2) : pct.toFixed(4))} % of all circulating LUV/WETH liquidity`;
     $("s-treasury").textContent = `${treasuryLP} LP wei  (≈ ${formatUnits(treasuryLP)} LP) still unlocked in the treasury`;
     $("s-read").textContent = `read live at ${new Date().toISOString()} — refresh the page to re-ask the chain`;
 
