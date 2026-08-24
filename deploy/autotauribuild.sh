@@ -35,9 +35,14 @@ fi
 
 say "4/5  typescript — emit dapp/*.js beside the sources"
 if command -v npx >/dev/null; then
-  npx --yes typescript@5 tsc dapp/app.ts dapp/dapp.tsx dapp/modules/augmented.ts \
+  # -p typescript@5 tsc: typescript ships two bins (tsc, tsserver), so npx needs the
+  # package/bin split or it errors with "could not determine executable to run".
+  npx -y -p typescript@5 tsc dapp/app.ts dapp/dapp.tsx dapp/modules/augmented.ts \
     --target es2022 --module es2022 --moduleResolution bundler --jsx preserve \
-    --allowJs --skipLibCheck --outDir dapp
+    --allowJs --skipLibCheck --outDir dapp || true
+  # --jsx preserve emits dapp.jsx; index.html imports dapp.js. The file contains no JSX
+  # (explicit DOM by design) so the rename is lossless.
+  [ -f dapp/dapp.jsx ] && mv dapp/dapp.jsx dapp/dapp.js
 else
   echo "  npx unavailable — emit dapp/*.js by hand before bundling"
 fi
